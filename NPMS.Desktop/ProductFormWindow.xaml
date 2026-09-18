@@ -1,0 +1,773 @@
+<Window x:Class="NPMS.Desktop.ProductFormWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add New Product — NPMS" Height="820" Width="1100"
+        WindowStartupLocation="CenterOwner"
+        Background="#F9FAFB">
+    <Window.Resources>
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="InputStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+        <Style x:Key="PlaceholderInputStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
+            <Setter Property="Foreground" Value="#9CA3AF"/>
+        </Style>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+        <Style x:Key="SpecLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SpecInput" TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+        <Style x:Key="TabBtn" TargetType="RadioButton">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="TabBorder" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter Property="Foreground" Value="#2563EB"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#374151"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Bar -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="24,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="New Product Management System" FontSize="16" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="BtnCancel" Click="BtnCancel_Click" Content="Cancel"
+                            Height="34" Padding="16,0" Background="White"
+                            Foreground="#374151" BorderBrush="#D1D5DB" BorderThickness="1"
+                            FontSize="13" Cursor="Hand" Margin="0,0,8,0"/>
+                    <Button x:Name="BtnSaveDraft" Click="BtnSaveDraft_Click" Content="Save as Draft"
+                            Height="34" Padding="16,0" Background="White"
+                            Foreground="#374151" BorderBrush="#D1D5DB" BorderThickness="1"
+                            FontSize="13" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,8,0"/>
+                    <Border Background="#2563EB" CornerRadius="6">
+                        <Button x:Name="BtnSave" Click="BtnSave_Click" Content="Save Product"
+                                Height="34" Padding="16,0" Background="Transparent"
+                                Foreground="White" BorderThickness="0"
+                                FontSize="13" FontWeight="SemiBold" Cursor="Hand"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#F9FAFB">
+            <Grid Margin="24,20,24,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="220"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Column -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                    <!-- Breadcrumb -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <TextBlock Text="Dashboard" Foreground="#6B7280" FontSize="12"/>
+                        <TextBlock Text=" › " Foreground="#6B7280" FontSize="12"/>
+                        <TextBlock x:Name="TxtBreadcrumb" Text="Add New Product" Foreground="#374151" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Validation Error -->
+                    <Border x:Name="ErrorBorder" Background="#FEF2F2" BorderBrush="#FECACA"
+                            BorderThickness="1" CornerRadius="6" Padding="12,8"
+                            Margin="0,0,0,12" Visibility="Collapsed">
+                        <TextBlock x:Name="TxtValidationError" Foreground="#DC2626" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Section 1: Product Information -->
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <TextBlock Text="Product Information" Style="{StaticResource SectionTitle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Part Number" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtPartNumber" Style="{StaticResource InputStyle}" Tag="Enter Part Number"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Product Name" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtProductName" Style="{StaticResource InputStyle}" Tag="Enter Product Name"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Product Family" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtProductFamily" Style="{StaticResource InputStyle}" Tag="Enter Product Family"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Product Group" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="TxtProductGroup" Style="{StaticResource InputStyle}" Tag="Enter Product Group"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Product Type" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox x:Name="CmbProductType" Height="34" BorderBrush="#D1D5DB" FontSize="13"
+                                              Background="White" Padding="8,0">
+                                        <ComboBoxItem Content="Enter Product Type" Foreground="#9CA3AF" IsSelected="True"/>
+                                        <ComboBoxItem Content="Inductor"/>
+                                        <ComboBoxItem Content="Transformer"/>
+                                        <ComboBoxItem Content="Sensor"/>
+                                        <ComboBoxItem Content="Choke"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Status" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox x:Name="CmbStatus" Height="34" BorderBrush="#D1D5DB" FontSize="13"
+                                              Background="White" Padding="8,0">
+                                        <ComboBoxItem Content="Enter Status" Foreground="#9CA3AF" IsSelected="True"/>
+                                        <ComboBoxItem Content="Draft"/>
+                                        <ComboBoxItem Content="In Development"/>
+                                        <ComboBoxItem Content="Pending Review"/>
+                                        <ComboBoxItem Content="Released"/>
+                                        <ComboBoxItem Content="Obsolete"/>
+                                        <ComboBoxItem Content="Discontinued"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Text="Current Product Revision" Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="TxtRevision" Style="{StaticResource InputStyle}" Tag="Enter Revision"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Description" Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="TxtDescription" Height="80" Padding="10,8"
+                                         TextWrapping="Wrap" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         BorderBrush="#D1D5DB" BorderThickness="1"
+                                         FontSize="13" Background="White"
+                                         Tag="Enter Description"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 2: Manufacturing Information -->
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <TextBlock Text="Manufacturing Information" Style="{StaticResource SectionTitle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Factory" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="MfgFactory" Style="{StaticResource InputStyle}" Tag="Enter Factory"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Production Line" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox x:Name="MfgLine" Style="{StaticResource InputStyle}" Tag="Enter Production Line"/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Text="Production Type" Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="MfgProdType" Style="{StaticResource InputStyle}" Tag="Enter Production Type"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Manufacturing Notes" Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="MfgNotes" Height="60" Padding="10,8"
+                                         TextWrapping="Wrap" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         BorderBrush="#D1D5DB" BorderThickness="1"
+                                         FontSize="13" Background="White"
+                                         Tag="Enter Manufacturing Notes"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 3: Process & Parameters -->
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <TextBlock Text="Process &amp; Parameters" Style="{StaticResource SectionTitle}" Margin="0"/>
+                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                    <!-- Move Up -->
+                                    <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" Margin="0,0,6,0">
+                                        <Button x:Name="BtnMoveUp" Click="BtnMoveUp_Click"
+                                                Height="30" Width="30" Background="Transparent"
+                                                Foreground="#374151" FontSize="13"
+                                                BorderThickness="0" Cursor="Hand" ToolTip="Move Up">
+                                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70E;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </Button>
+                                    </Border>
+                                    <!-- Move Down -->
+                                    <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" Margin="0,0,6,0">
+                                        <Button x:Name="BtnMoveDown" Click="BtnMoveDown_Click"
+                                                Height="30" Width="30" Background="Transparent"
+                                                Foreground="#374151" FontSize="13"
+                                                BorderThickness="0" Cursor="Hand" ToolTip="Move Down">
+                                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70D;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </Button>
+                                    </Border>
+                                    <!-- Delete Process -->
+                                    <Border Background="White" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="4" Margin="0,0,6,0">
+                                        <Button x:Name="BtnDeleteProcess" Click="BtnDeleteProcess_Click"
+                                                Height="30" Width="30" Background="Transparent"
+                                                Foreground="#DC2626" FontSize="13"
+                                                BorderThickness="0" Cursor="Hand" ToolTip="Delete Process">
+                                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </Button>
+                                    </Border>
+                                    <!-- Add Process -->
+                                    <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4">
+                                        <Button Content="+ Add Process" Click="BtnAddProcess_Click"
+                                                Height="30" Padding="12,0" Background="Transparent"
+                                                Foreground="#374151" FontSize="12"
+                                                BorderThickness="0" Cursor="Hand"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Process Tabs -->
+                            <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Margin="0,0,0,0">
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                    <WrapPanel x:Name="ProcessTabBar" Orientation="Horizontal"/>
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- Process Detail Panel -->
+                            <Border x:Name="ProcessDetailPanel" BorderBrush="#E5E7EB" BorderThickness="1"
+                                    CornerRadius="6" Padding="16" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Process Details" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="#374151" Margin="0,0,0,12"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Process Name" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox x:Name="TxtProcessName" Style="{StaticResource InputStyle}" Tag="Process Name"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Machine" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox x:Name="TxtMachine" Style="{StaticResource InputStyle}" Tag="Enter Machine"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Tooling" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtTooling" Style="{StaticResource InputStyle}" Width="240" HorizontalAlignment="Left" Tag="Enter Tooling"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,16">
+                                        <TextBlock Text="Process Description" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="TxtProcessDesc" Height="60" Padding="10,8"
+                                                 TextWrapping="Wrap" AcceptsReturn="True"
+                                                 BorderBrush="#D1D5DB" BorderThickness="1"
+                                                 FontSize="13" Background="White"
+                                                 Tag="Enter Process Description"/>
+                                    </StackPanel>
+
+                                    <!-- Process Parameters -->
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Process Parameters" FontSize="13"
+                                                   FontWeight="SemiBold" Foreground="#374151" VerticalAlignment="Center"/>
+                                        <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4">
+                                            <Button Content="+ Add Parameter" Click="BtnAddParameter_Click"
+                                                    Height="28" Padding="10,0" Background="Transparent"
+                                                    Foreground="#374151" FontSize="11"
+                                                    BorderThickness="0" Cursor="Hand"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4">
+                                        <StackPanel>
+                                            <!-- Header -->
+                                            <Grid Background="#F9FAFB" Height="34">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Parameter" Grid.Column="0" Style="{StaticResource LabelStyle}"
+                                                           Margin="12,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Value" Grid.Column="1" Style="{StaticResource LabelStyle}"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Text="Unit" Grid.Column="2" Style="{StaticResource LabelStyle}"
+                                                           VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <ItemsControl x:Name="ParamList">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
+                                                            <Grid Height="36">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="120"/>
+                                                                    <ColumnDefinition Width="100"/>
+                                                                    <ColumnDefinition Width="60"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBox Grid.Column="0" Text="{Binding ParameterName, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Margin="4,3" Padding="6,0" VerticalContentAlignment="Center"
+                                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="12"/>
+                                                                <TextBox Grid.Column="1" Text="{Binding ParameterValue, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Margin="4,3" Padding="6,0" VerticalContentAlignment="Center"
+                                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="12"/>
+                                                                <TextBox Grid.Column="2" Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Margin="4,3" Padding="6,0" VerticalContentAlignment="Center"
+                                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="12"/>
+                                                                <Button Grid.Column="3" Content="✕" Click="BtnRemoveParam_Click"
+                                                                        Background="Transparent" Foreground="#9CA3AF"
+                                                                        BorderThickness="0" FontSize="12" Cursor="Hand"
+                                                                        DataContext="{Binding}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 4: Supporting Documents -->
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <TextBlock Text="Supporting Documents" Style="{StaticResource SectionTitle}" Margin="0"/>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                                        Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4">
+                                    <Button Click="BtnUploadDoc_Click"
+                                            Height="30" Padding="12,0" Background="Transparent"
+                                            Foreground="#374151" FontSize="12"
+                                            BorderThickness="0" Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE898;"
+                                                       FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Upload" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </Grid>
+                            <TextBlock Foreground="#6B7280" FontSize="11" Margin="0,0,0,12">
+                                Document Types: Work Instruction, Drawing, Manufacturing Specification, Inspection Standard, Other
+                            </TextBlock>
+                            <!-- Doc Table Header -->
+                            <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4">
+                                <StackPanel>
+                                    <Grid Background="#F9FAFB" Height="36">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Document Name" Style="{StaticResource LabelStyle}" Margin="12,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="Document Type" Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="Document Revision" Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="File Name" Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="4" Text="Action" Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <ItemsControl x:Name="DocList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
+                                                    <Grid MinHeight="36">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="140"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="100"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding DocumentName}"
+                                                                   FontSize="12" Margin="12,0" VerticalAlignment="Center"
+                                                                   TextWrapping="Wrap"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding DocumentType}"
+                                                                   FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Revision}"
+                                                                   FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding FileName}"
+                                                                   FontSize="12" VerticalAlignment="Center"
+                                                                   TextWrapping="Wrap"/>
+                                                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Content="Delete" Click="BtnDeleteDoc_Click"
+                                                                    Background="Transparent" Foreground="#DC2626"
+                                                                    BorderThickness="0" FontSize="11" Cursor="Hand"
+                                                                    DataContext="{Binding}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+                <!-- Right Column -->
+                <StackPanel Grid.Column="1">
+
+                    <!-- Product Image -->
+                    <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                            CornerRadius="8" Padding="16" Margin="0,36,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock Text="Finished Product Image" FontSize="13"
+                                           FontWeight="SemiBold" Foreground="#111827"/>
+                                <TextBlock Text="Optional" HorizontalAlignment="Right"
+                                           Foreground="#9CA3AF" FontSize="11" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Border x:Name="ImagePreviewBorder" Background="#F9FAFB" BorderBrush="#E5E7EB"
+                                    BorderThickness="1" CornerRadius="6" Height="100" Margin="0,0,0,10"
+                                    ClipToBounds="True">
+                                <Grid>
+                                    <StackPanel x:Name="ImgPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEB9F;"
+                                                   FontSize="24" HorizontalAlignment="Center" Foreground="#D1D5DB"/>
+                                        <TextBlock Text="No image uploaded" FontSize="11"
+                                                   Foreground="#9CA3AF" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <Image x:Name="ImgPreview" Stretch="Uniform" Visibility="Collapsed"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Center">
+                                <Button Content="Browse..." Click="BtnBrowseImage_Click"
+                                        Height="28" Padding="16,0" Background="Transparent"
+                                        Foreground="#374151" FontSize="12"
+                                        BorderThickness="0" Cursor="Hand"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Product Specification -->
+                    <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                            CornerRadius="8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Product Specification" FontSize="13"
+                                       FontWeight="SemiBold" Foreground="#111827" Margin="0,0,0,14"/>
+
+                            <!-- Dimensions -->
+                            <TextBlock Text="DIMENSIONS" FontSize="10" FontWeight="Bold"
+                                       Foreground="#6B7280" Margin="0,0,0,6"/>
+
+                            <!-- Header row -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="1" Text="Value" FontSize="10" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="± Tol." FontSize="10" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
+                            </Grid>
+                            <!-- Length -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Length" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecLength" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecLenTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                            <!-- Width -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Width" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecWidth" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecWidTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                            <!-- Height -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Height" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecHeight" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecHgtTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="mm" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Electrical -->
+                            <TextBlock Text="ELECTRICAL" FontSize="10" FontWeight="Bold"
+                                       Foreground="#6B7280" Margin="0,0,0,6"/>
+                            <!-- Header row -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="1" Text="Value" FontSize="10" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="± Tol." FontSize="10" Foreground="#9CA3AF" HorizontalAlignment="Center"/>
+                            </Grid>
+                            <!-- Inductance -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Inductance" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecInductance" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="µH" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecIndTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="%" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                            <!-- ISAAT -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="ISAAT" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecIsaat" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="A" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecIsaatTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="%" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                            <!-- DCR -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="DCR" Style="{StaticResource SpecLabel}" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecDcr" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="Ω" FontSize="11" Foreground="#9CA3AF" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Column="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SpecDcrTol" Style="{StaticResource SpecInput}" Tag="0"/>
+                                    <TextBlock Grid.Column="1" Text="%" FontSize="10" Foreground="#9CA3AF" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Materials -->
+                            <Border BorderBrush="#E5E7EB" BorderThickness="0,1,0,0" Margin="0,0,0,10"/>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="MATERIALS" FontSize="10" FontWeight="Bold"
+                                           Foreground="#6B7280" VerticalAlignment="Center"/>
+                                <Border HorizontalAlignment="Right" Background="White"
+                                        BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4">
+                                    <Button Content="+ Add" Click="BtnAddMaterial_Click"
+                                            Height="24" Padding="8,0" Background="Transparent"
+                                            Foreground="#374151" FontSize="11"
+                                            BorderThickness="0" Cursor="Hand"/>
+                                </Border>
+                            </Grid>
+                            <!-- Material table header -->
+                            <Grid Background="#F9FAFB" Height="28" Margin="0,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="24"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Part Number" FontSize="10" FontWeight="Bold"
+                                           Foreground="#6B7280" Margin="4,0" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Part Name" FontSize="10" FontWeight="Bold"
+                                           Foreground="#6B7280" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ItemsControl x:Name="MaterialList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
+                                            <Grid Height="32">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="24"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" Text="{Binding PartNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="2" Padding="4,0" VerticalContentAlignment="Center"
+                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="11"/>
+                                                <TextBox Grid.Column="1" Text="{Binding PartName, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="2" Padding="4,0" VerticalContentAlignment="Center"
+                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="11"/>
+                                                <Button Grid.Column="2" Content="x" Click="BtnRemoveMaterial_Click"
+                                                        Background="Transparent" Foreground="#9CA3AF"
+                                                        BorderThickness="0" FontSize="11" Cursor="Hand"
+                                                        DataContext="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

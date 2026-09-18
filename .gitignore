@@ -1,0 +1,55 @@
+## .NET / C# / WPF
+
+# Build output
+bin/
+obj/
+out/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# .NET runtime / publish output
+publish/
+*.pubxml
+*.pubxml.user
+
+# SQLite database files (generated at runtime)
+*.db
+*.db-shm
+*.db-wal
+
+# Storage directory (uploaded documents, generated at runtime)
+Storage/
+**/Storage/
+
+# Log files
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Sensitive configs (if ever added)
+appsettings.Production.json
+appsettings.Local.json
+secrets.json
+.env

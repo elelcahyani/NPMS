@@ -1,0 +1,52 @@
+<Window x:Class="NPMS.Desktop.UploadDocumentDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Upload Document" Height="340" Width="440"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="White">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Document Details" FontSize="15" FontWeight="Bold"
+                   Foreground="#111827" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="Document Name" FontSize="11" FontWeight="SemiBold" Foreground="#6B7280" Margin="0,0,0,4"/>
+            <TextBox x:Name="TxtDocName" Height="34" Padding="10,0" VerticalContentAlignment="Center"
+                     BorderBrush="#D1D5DB" BorderThickness="1" FontSize="13" Margin="0,0,0,12"/>
+
+            <TextBlock Text="Document Type" FontSize="11" FontWeight="SemiBold" Foreground="#6B7280" Margin="0,0,0,4"/>
+            <ComboBox x:Name="CmbDocType" Height="34" BorderBrush="#D1D5DB" FontSize="13"
+                      Background="White" Margin="0,0,0,12">
+                <ComboBoxItem Content="Work Instruction" IsSelected="True"/>
+                <ComboBoxItem Content="Drawing"/>
+                <ComboBoxItem Content="Manufacturing Specification"/>
+                <ComboBoxItem Content="Inspection Standard"/>
+                <ComboBoxItem Content="Other"/>
+            </ComboBox>
+
+            <TextBlock Text="Revision" FontSize="11" FontWeight="SemiBold" Foreground="#6B7280" Margin="0,0,0,4"/>
+            <TextBox x:Name="TxtRevision" Height="34" Padding="10,0" VerticalContentAlignment="Center"
+                     BorderBrush="#D1D5DB" BorderThickness="1" FontSize="13" Text="Rev.01"/>
+
+            <TextBlock x:Name="TxtError" Text="" Foreground="#DC2626" FontSize="12"
+                       Margin="0,8,0,0" Visibility="Collapsed"/>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,20,0,0">
+            <Button Content="Cancel" Click="BtnCancel_Click" HorizontalAlignment="Left"
+                    Width="90" Height="34" Background="White" Foreground="#374151"
+                    BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
+            <Border HorizontalAlignment="Right" Background="#2563EB" CornerRadius="6">
+                <Button Content="Confirm Upload" Click="BtnConfirm_Click"
+                        Width="130" Height="34" Background="Transparent"
+                        Foreground="White" FontWeight="SemiBold"
+                        BorderThickness="0" Cursor="Hand"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

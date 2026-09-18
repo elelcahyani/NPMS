@@ -1,0 +1,6 @@
+@NPMS.WebAPI_HostAddress = http://localhost:5286
+
+GET {{NPMS.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

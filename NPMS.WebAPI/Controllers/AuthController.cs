@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NPMS.Core.DTOs;
 using NPMS.Core.Services;
@@ -5,6 +6,7 @@ using NPMS.Core.Services;
 namespace NPMS.WebAPI.Controllers
 {
     [ApiController]
+    [AllowAnonymous]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {

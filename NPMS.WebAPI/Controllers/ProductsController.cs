@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NPMS.Core.DTOs;
@@ -7,6 +8,7 @@ using System.IO;
 namespace NPMS.WebAPI.Controllers
 {
     [ApiController]
+    [Authorize(AuthenticationSchemes = "NPMSApiKey")]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
@@ -42,8 +44,7 @@ namespace NPMS.WebAPI.Controllers
         [HttpPost]
         public IActionResult CreateProduct([FromBody] ProductSaveDto dto)
         {
-            var user = Request.Headers["X-User-Name"].ToString();
-            if (string.IsNullOrEmpty(user)) user = "R&D User";
+            var user = User.Identity?.Name ?? "npms-server";
             var created = _service.CreateProduct(dto, user);
             return CreatedAtAction(nameof(GetProductById), new { id = created.ProductId }, created);
         }
@@ -51,8 +52,7 @@ namespace NPMS.WebAPI.Controllers
         [HttpPut("{id:int}")]
         public IActionResult UpdateProduct(int id, [FromBody] ProductSaveDto dto)
         {
-            var user = Request.Headers["X-User-Name"].ToString();
-            if (string.IsNullOrEmpty(user)) user = "R&D User";
+            var user = User.Identity?.Name ?? "npms-server";
             var updated = _service.UpdateProduct(id, dto, user);
             if (updated == null) return NotFound(new { message = "Product not found." });
             return Ok(updated);
@@ -85,8 +85,7 @@ namespace NPMS.WebAPI.Controllers
         {
             if (file == null || file.Length == 0) return BadRequest(new { message = "File is required." });
 
-            var user = Request.Headers["X-User-Name"].ToString();
-            if (string.IsNullOrEmpty(user)) user = "R&D User";
+            var user = User.Identity?.Name ?? "npms-server";
 
             using var ms = new MemoryStream();
             file.CopyTo(ms);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NPMS.Core.Data;
 using NPMS.Core.Services;
@@ -7,6 +8,7 @@ using System.Linq;
 namespace NPMS.WebAPI.Controllers
 {
     [ApiController]
+    [Authorize(AuthenticationSchemes = "NPMSApiKey")]
     [Route("api/[controller]")]
     public class DocumentsController : ControllerBase
     {

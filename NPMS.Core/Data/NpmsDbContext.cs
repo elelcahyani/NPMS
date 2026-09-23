@@ -85,28 +85,62 @@ namespace NPMS.Core.Data
         {
             db.Database.EnsureCreated();
 
-            if (db.Roles.Any())
-                return; // Already seeded
-
+            var initialSeed = !db.Roles.Any();
             var imgDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
 
             // ─── ROLES ────────────────────────────────────────────────────────
-            var roleSuperAdmin   = new Role { RoleName = UserRole.SuperAdmin };
-            var roleRdTeam       = new Role { RoleName = UserRole.RdTeam };
-            var roleStoreManager = new Role { RoleName = UserRole.StoreManager };
-            var roleViewer       = new Role { RoleName = UserRole.Viewer };
+            var roleSuperAdmin = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.SuperAdmin);
+            var roleRdTeam = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.RdTeam);
+            var roleStoreManager = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.StoreManager);
+            var roleViewer = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.Viewer);
 
-            db.Roles.AddRange(roleSuperAdmin, roleRdTeam, roleStoreManager, roleViewer);
-            db.SaveChanges();
+            if (roleSuperAdmin == null || roleRdTeam == null || roleStoreManager == null || roleViewer == null)
+            {
+                roleSuperAdmin ??= new Role { RoleName = UserRole.SuperAdmin };
+                roleRdTeam ??= new Role { RoleName = UserRole.RdTeam };
+                roleStoreManager ??= new Role { RoleName = UserRole.StoreManager };
+                roleViewer ??= new Role { RoleName = UserRole.Viewer };
+                db.Roles.AddRange(
+                    roleSuperAdmin,
+                    roleRdTeam,
+                    roleStoreManager,
+                    roleViewer);
+                db.SaveChanges();
+            }
 
             // ─── USERS ────────────────────────────────────────────────────────
-            db.Users.AddRange(
-                new User { Username = "superadmin",    PasswordHash = ProductService.HashPassword("Admin@1234"),   RoleId = roleSuperAdmin.RoleId,   IsActive = true },
-                new User { Username = "rd_user",       PasswordHash = ProductService.HashPassword("Rdteam@1234"),  RoleId = roleRdTeam.RoleId,       IsActive = true },
-                new User { Username = "store_manager", PasswordHash = ProductService.HashPassword("Store@1234"),   RoleId = roleStoreManager.RoleId, IsActive = true },
-                new User { Username = "viewer",        PasswordHash = ProductService.HashPassword("Viewer@1234"),  RoleId = roleViewer.RoleId,       IsActive = true }
-            );
-            db.SaveChanges();
+            // Disable legacy SHA-256 seeded accounts during upgrade. New administrators must be
+            // explicitly configured through environment variables.
+            var legacyUsers = db.Users.Where(u => !u.PasswordHash.Contains(":")).ToList();
+            if (legacyUsers.Count > 0)
+            {
+                foreach (var user in legacyUsers)
+                    user.IsActive = false;
+                db.SaveChanges();
+            }
+
+            var adminUsername = Environment.GetEnvironmentVariable("NPMS_ADMIN_USERNAME");
+            var adminPassword = Environment.GetEnvironmentVariable("NPMS_ADMIN_PASSWORD");
+
+            var hasActiveSuperAdmin = db.Users.Any(u =>
+                u.RoleId == roleSuperAdmin.RoleId && u.IsActive);
+            if (!hasActiveSuperAdmin &&
+                !string.IsNullOrWhiteSpace(adminUsername) &&
+                !string.IsNullOrWhiteSpace(adminPassword) &&
+                !db.Users.Any(u => u.Username == adminUsername))
+            {
+                db.Users.Add(new User
+                {
+                    Username = adminUsername,
+                    PasswordHash = ProductService.HashPassword(adminPassword),
+                    RoleId = roleSuperAdmin.RoleId,
+                    IsActive = true
+                });
+                db.SaveChanges();
+            }
+
+            if (!initialSeed)
+                return;
 
             // Seed Machines & Toolings
             var m1 = new Machine { MachineName = "Automated Winder W-01", MachineCode = "MAC-WIND-01" };

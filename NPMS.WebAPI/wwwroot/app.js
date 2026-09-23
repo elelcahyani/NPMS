@@ -4,24 +4,81 @@ let currentUser = {
   isRd: true
 };
 
-let currentView = "list"; // "list", "detail", "form"
+let currentView = "list";
 let currentProduct = null;
 let activeProcessIndex = 0;
 let productsData = [];
 
-// Initialize
+function element(tag, attributes = {}, children = []) {
+  const item = document.createElement(tag);
+  Object.entries(attributes).forEach(([name, value]) => {
+    if (name === "className") {
+      item.className = value;
+    } else if (name === "textContent") {
+      item.textContent = value ?? "";
+    } else if (name.startsWith("on") && typeof value === "function") {
+      item.addEventListener(name.slice(2), value);
+    } else if (name === "checked" || name === "required" || name === "disabled" || name === "selected") {
+      item[name] = Boolean(value);
+    } else if (name === "htmlFor") {
+      item.htmlFor = String(value);
+    } else if (value !== null && value !== undefined) {
+      item.setAttribute(name, String(value));
+    }
+  });
+  children.filter(child => child !== null && child !== undefined).forEach(child => {
+    item.append(child.nodeType ? child : document.createTextNode(String(child)));
+  });
+  return item;
+}
+
+function text(value, fallback = "") {
+  return document.createTextNode(value === null || value === undefined || value === "" ? fallback : String(value));
+}
+
+function labelValue(label, value, className = "info-box") {
+  return element("div", { className: "info-group" }, [
+    element("div", { className: "info-label", textContent: label }),
+    element("div", { className, textContent: value ?? "" })
+  ]);
+}
+
+function card(title, children) {
+  return element("div", { className: "card" }, [
+    element("div", { className: "card-title", textContent: title }),
+    ...children
+  ]);
+}
+
+function button(label, className, handler) {
+  return element("button", { className, type: "button", onclick: handler }, [text(label)]);
+}
+
+function getStatusBadge(status) {
+  let cls = "badge-draft";
+  if (status === "Released") cls = "badge-released";
+  else if (status === "Obsolete") cls = "badge-obsolete";
+  return element("span", { className: `badge ${cls}` }, [
+    element("span", { style: "font-size:8px;", textContent: "●" }),
+    text(` ${status ?? ""}`)
+  ]);
+}
+
+function safeImagePath(path) {
+  return typeof path === "string" && /^\/images\/[A-Za-z0-9._-]+$/.test(path)
+    ? path
+    : "/images/power_inductor.png";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   fetchProducts();
 });
 
 function toggleUserRole() {
-  if (currentUser.isRd) {
-    currentUser = { name: "User", role: "Non-R&D Department", isRd: false };
-  } else {
-    currentUser = { name: "R&D User", role: "R&D Team", isRd: true };
-  }
+  currentUser = currentUser.isRd
+    ? { name: "User", role: "Non-R&D Department", isRd: false }
+    : { name: "R&D User", role: "R&D Team", isRd: true };
   updateUserUI();
-  // Refresh view
   if (currentView === "list") renderListView();
   else if (currentView === "detail" && currentProduct) renderDetailView(currentProduct.productId);
 }
@@ -34,7 +91,7 @@ function updateUserUI() {
 
 async function fetchProducts(query = "", status = "", factory = "") {
   try {
-    let url = `/api/products?query=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&factory=${encodeURIComponent(factory)}`;
+    const url = `/api/products?query=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&factory=${encodeURIComponent(factory)}`;
     const res = await fetch(url);
     if (res.ok) {
       productsData = await res.json();
@@ -47,415 +104,336 @@ async function fetchProducts(query = "", status = "", factory = "") {
 
 function switchView(view, productId = null) {
   currentView = view;
-  if (view === "list") {
-    fetchProducts();
-  } else if (view === "detail" && productId) {
-    renderDetailView(productId);
-  } else if (view === "form") {
-    renderFormView(productId);
-  }
+  if (view === "list") fetchProducts();
+  else if (view === "detail" && productId) renderDetailView(productId);
+  else if (view === "form") renderFormView(productId);
 }
 
 function handleTopSearch(e) {
   if (e.key === "Enter" || e.type === "keyup") {
-    const val = e.target.value;
-    if (currentView !== "list") {
-      currentView = "list";
-    }
-    fetchProducts(val, getFilterVal("filter-status"), getFilterVal("filter-factory"));
+    if (currentView !== "list") currentView = "list";
+    fetchProducts(e.target.value, getFilterVal("filter-status"), getFilterVal("filter-factory"));
   }
 }
 
 function getFilterVal(id) {
-  const el = document.getElementById(id);
-  return el ? el.value : "";
+  const item = document.getElementById(id);
+  return item ? item.value : "";
 }
 
 function applyFilters() {
-  const query = document.getElementById("top-search-input").value;
-  const status = document.getElementById("filter-status").value;
-  const factory = document.getElementById("filter-factory").value;
-  fetchProducts(query, status, factory);
+  fetchProducts(
+    document.getElementById("top-search-input").value,
+    getFilterVal("filter-status"),
+    getFilterVal("filter-factory")
+  );
 }
 
 function clearFilters() {
   document.getElementById("top-search-input").value = "";
-  if (document.getElementById("filter-status")) document.getElementById("filter-status").value = "Status";
-  if (document.getElementById("filter-factory")) document.getElementById("filter-factory").value = "Factory";
-  if (document.getElementById("filter-part")) document.getElementById("filter-part").value = "Part Number";
+  ["filter-status", "filter-factory", "filter-part"].forEach((id, index) => {
+    const item = document.getElementById(id);
+    if (item) item.value = ["Status", "Factory", "Part Number"][index];
+  });
   fetchProducts();
 }
 
-// Render Product Database Table View (Image 1 Mockup)
 function renderListView() {
   const main = document.getElementById("main-content");
-  main.innerHTML = `
-    <div class="breadcrumb">
-      <span>Dashboard</span>
-    </div>
-    
-    <div class="page-header">
-      <div class="page-title-group">
-        <h1>Product Database</h1>
-        <p>Search and manage product information</p>
-      </div>
-      ${currentUser.isRd ? `<button class="btn btn-primary" onclick="switchView('form')">+ Add New Product</button>` : ''}
-    </div>
+  const root = element("div");
+  root.append(
+    element("div", { className: "breadcrumb" }, [element("span", { textContent: "Dashboard" })]),
+    element("div", { className: "page-header" }, [
+      element("div", { className: "page-title-group" }, [
+        element("h1", { textContent: "Product Database" }),
+        element("p", { textContent: "Search and manage product information" })
+      ]),
+      currentUser.isRd ? button("+ Add New Product", "btn btn-primary", () => switchView("form")) : null
+    ])
+  );
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-      <select id="filter-part" class="filter-select" onchange="applyFilters()">
-        <option>Part Number</option>
-        ${productsData.map(p => `<option value="${p.partNumber}">${p.partNumber}</option>`).join('')}
-      </select>
-      <select id="filter-status" class="filter-select" onchange="applyFilters()">
-        <option>Status</option>
-        <option value="Released">Released</option>
-        <option value="Draft">Draft</option>
-        <option value="Obsolete">Obsolete</option>
-        <option value="Pending Review">Pending Review</option>
-      </select>
-      <select id="filter-factory" class="filter-select" onchange="applyFilters()">
-        <option>Factory</option>
-        <option value="Bintan">Bintan</option>
-        <option value="Alpha Facility">Alpha Facility</option>
-        <option value="Beta Facility">Beta Facility</option>
-        <option value="Gamma Facility">Gamma Facility</option>
-        <option value="Delta Facility">Delta Facility</option>
-        <option value="Epsilon Facility">Epsilon Facility</option>
-      </select>
-      <button class="clear-filter-btn" onclick="clearFilters()">Clear Filters</button>
-    </div>
+  const partFilter = element("select", { id: "filter-part", className: "filter-select", onchange: applyFilters }, [
+    element("option", { textContent: "Part Number" })
+  ]);
+  productsData.forEach(product => partFilter.append(element("option", {
+    value: product.partNumber,
+    textContent: product.partNumber
+  })));
 
-    <!-- Data Table -->
-    <div class="data-table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>PART NUMBER</th>
-            <th>PRODUCT NAME</th>
-            <th>PRODUCT TYPE</th>
-            <th>STATUS</th>
-            <th>CURRENT REV</th>
-            <th>FACTORY</th>
-            <th>PROD LINE</th>
-            <th>LAST MODIFIED</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${productsData.length === 0 ? `
-            <tr><td colspan="8" style="text-align:center; padding: 40px; color: var(--text-muted);">No products found matching criteria.</td></tr>
-          ` : productsData.map(p => `
-            <tr onclick="switchView('detail', ${p.productId})">
-              <td class="pn-link">${p.partNumber}</td>
-              <td style="font-weight: 600;">${p.productName}</td>
-              <td>${p.productType}</td>
-              <td>${getStatusBadge(p.status)}</td>
-              <td>${p.currentRevision}</td>
-              <td>${p.factory}</td>
-              <td>${p.productionLine}</td>
-              <td>${new Date(p.lastModified).toLocaleDateString()}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
+  const statusFilter = element("select", { id: "filter-status", className: "filter-select", onchange: applyFilters }, [
+    element("option", { textContent: "Status" }),
+    ...["Released", "Draft", "Obsolete", "Pending Review"].map(value =>
+      element("option", { value, textContent: value }))
+  ]);
+  const factoryFilter = element("select", { id: "filter-factory", className: "filter-select", onchange: applyFilters }, [
+    element("option", { textContent: "Factory" }),
+    ...["Bintan", "Alpha Facility", "Beta Facility", "Gamma Facility", "Delta Facility", "Epsilon Facility"].map(value =>
+      element("option", { value, textContent: value }))
+  ]);
+  root.append(element("div", { className: "filter-bar" }, [
+    partFilter, statusFilter, factoryFilter,
+    button("Clear Filters", "clear-filter-btn", clearFilters)
+  ]));
+
+  const body = element("tbody");
+  if (productsData.length === 0) {
+    body.append(element("tr", {}, [
+      element("td", { colspan: "8", style: "text-align:center; padding: 40px; color: var(--text-muted);", textContent: "No products found matching criteria." })
+    ]));
+  } else {
+    productsData.forEach(product => {
+      const row = element("tr", { onclick: () => switchView("detail", product.productId) }, [
+        element("td", { className: "pn-link", textContent: product.partNumber }),
+        element("td", { style: "font-weight: 600;", textContent: product.productName }),
+        element("td", { textContent: product.productType }),
+        element("td", {}, [getStatusBadge(product.status)]),
+        element("td", { textContent: product.currentRevision }),
+        element("td", { textContent: product.factory }),
+        element("td", { textContent: product.productionLine }),
+        element("td", { textContent: new Date(product.lastModified).toLocaleDateString() })
+      ]);
+      body.append(row);
+    });
+  }
+  root.append(element("div", { className: "data-table-container" }, [
+    element("table", { className: "data-table" }, [
+      element("thead", {}, [element("tr", {}, [
+        ...["PART NUMBER", "PRODUCT NAME", "PRODUCT TYPE", "STATUS", "CURRENT REV", "FACTORY", "PROD LINE", "LAST MODIFIED"]
+          .map(value => element("th", { textContent: value }))
+      ])]),
+      body
+    ])
+  ]));
+  main.replaceChildren(root);
 }
 
-function getStatusBadge(status) {
-  let cls = "badge-draft";
-  if (status === "Released") cls = "badge-released";
-  else if (status === "Obsolete") cls = "badge-obsolete";
-  else if (status === "Pending Review" || status === "Draft") cls = "badge-draft";
-  return `<span class="badge ${cls}"><span style="font-size:8px;">●</span> ${status}</span>`;
-}
-
-// Render Product Dashboard Detail View (Image 2 & 3 Mockups)
 async function renderDetailView(productId) {
-  const main = document.getElementById("main-content");
   try {
     const res = await fetch(`/api/products/${productId}`);
     if (!res.ok) return;
     currentProduct = await res.json();
     activeProcessIndex = 0;
-
     const p = currentProduct;
     const spec = p.specification || {};
     const mfg = p.manufacturingInfo || {};
     const processes = p.processes || [];
     const docs = p.documents || [];
+    const main = document.getElementById("main-content");
+    const root = element("div");
 
-    main.innerHTML = `
-      <div class="breadcrumb">
-        <a href="#" onclick="switchView('list')">Dashboard</a>
-        <span>&rsaquo;</span>
-        <span>Search Results</span>
-        <span>&rsaquo;</span>
-        <span style="color: var(--text-main); font-weight: 500;">Product Dashboard</span>
-      </div>
-      
-      <div style="margin-bottom: 16px;">
-        <a href="#" onclick="switchView('list')" style="color: var(--primary-color); text-decoration: none; font-size: 13px; font-weight: 500;">&larr; Back to Search Results</a>
-      </div>
+    const back = () => switchView("list");
+    root.append(
+      element("div", { className: "breadcrumb" }, [
+        element("a", { href: "#", onclick: e => { e.preventDefault(); back(); }, textContent: "Dashboard" }),
+        text(" › Search Results › Product Dashboard")
+      ]),
+      element("div", { style: "margin-bottom: 16px;" }, [
+        element("a", { href: "#", onclick: e => { e.preventDefault(); back(); }, textContent: "← Back to Search Results" })
+      ]),
+      element("div", { className: "page-header" }, [
+        element("div", { className: "page-title-group" }, [
+          element("h1", { textContent: String(p.productName || "").toUpperCase() })
+        ]),
+        currentUser.isRd
+          ? button("✏️ Edit Product", "btn btn-outline", () => switchView("form", p.productId))
+          : element("span", { className: "badge badge-readonly", textContent: "👁️ Read-only Access" })
+      ])
+    );
 
-      <div class="page-header" style="align-items: center;">
-        <div class="page-title-group">
-          <h1>${p.productName.toUpperCase()}</h1>
-        </div>
-        <div>
-          ${currentUser.isRd ? `
-            <button class="btn btn-outline" onclick="switchView('form', ${p.productId})">
-              ✏️ Edit Product
-            </button>
-          ` : `
-            <span class="badge badge-readonly">👁️ Read-only Access</span>
-          `}
-        </div>
-      </div>
+    const image = element("img", {
+      src: safeImagePath(p.imagePath),
+      className: "product-img-thumb",
+      alt: "Product Image"
+    });
+    image.addEventListener("error", () => { image.src = "/images/power_inductor.png"; }, { once: true });
+    const productCard = card("Product Information", [
+      element("div", { className: "product-info-grid" }, [
+        image,
+        element("div", {}, [
+          labelValue("PART NUMBER", p.partNumber),
+          labelValue("PRODUCT TYPE", p.productType),
+          labelValue("CURRENT REVISION", p.currentRevision)
+        ]),
+        element("div", {}, [
+          labelValue("PRODUCT NAME", p.productName),
+          labelValue("STATUS", null, "info-box")
+        ])
+      ]),
+      labelValue("DESCRIPTION", p.description, "info-box")
+    ]);
+    productCard.querySelectorAll(".info-box")[4].replaceChildren(getStatusBadge(p.status));
 
-      <div class="detail-grid">
-        <!-- Left Main Column -->
-        <div>
-          <!-- Product Information Card -->
-          <div class="card">
-            <div class="product-info-grid">
-              <img src="${p.imagePath || '/images/power_inductor.png'}" class="product-img-thumb" alt="Product Image" onerror="this.src='/images/power_inductor.png'">
-              <div>
-                <div class="info-group">
-                  <div class="info-label">PART NUMBER</div>
-                  <div class="info-box">${p.partNumber}</div>
-                </div>
-                <div class="info-group">
-                  <div class="info-label">PRODUCT TYPE</div>
-                  <div class="info-box">${p.productType}</div>
-                </div>
-                <div class="info-group">
-                  <div class="info-label">CURRENT REVISION</div>
-                  <div class="info-box">${p.currentRevision}</div>
-                </div>
-              </div>
-              <div>
-                <div class="info-group">
-                  <div class="info-label">PRODUCT NAME</div>
-                  <div class="info-box">${p.productName}</div>
-                </div>
-                <div class="info-group">
-                  <div class="info-label">STATUS</div>
-                  <div class="info-box">${getStatusBadge(p.status)}</div>
-                </div>
-              </div>
-            </div>
-            <div class="info-group" style="margin-top: 12px;">
-              <div class="info-label">DESCRIPTION</div>
-              <div class="info-box">${p.description || 'High performance component for industrial applications.'}</div>
-            </div>
-          </div>
+    const manufacturingCard = card("Manufacturing Information", [
+      element("div", { className: "form-grid" }, [
+        labelValue("FACTORY", mfg.factory, "info-box"),
+        labelValue("PRODUCTION LINE", mfg.productionLine, "info-box")
+      ]),
+      labelValue("PRODUCTION TYPE", mfg.productionType, "info-box"),
+      labelValue("MANUFACTURING NOTES", mfg.manufacturingNotes, "info-box")
+    ]);
 
-          <!-- Manufacturing Information Card -->
-          <div class="card">
-            <div class="card-title">Manufacturing Information</div>
-            <div class="form-grid">
-              <div class="info-group">
-                <div class="info-label">FACTORY</div>
-                <div class="info-box">${mfg.factory || 'Bintan'}</div>
-              </div>
-              <div class="info-group">
-                <div class="info-label">PRODUCTION LINE</div>
-                <div class="info-box">${mfg.productionLine || 'Line 03'}</div>
-              </div>
-            </div>
-            <div class="info-group">
-              <div class="info-label">PRODUCTION TYPE</div>
-              <div class="info-box">${mfg.productionType || 'Automated Assembly'}</div>
-            </div>
-            <div class="info-group">
-              <div class="info-label">MANUFACTURING NOTES</div>
-              <div class="info-box">${mfg.manufacturingNotes || 'Standard operating procedures apply.'}</div>
-            </div>
-          </div>
+    const processTabs = element("div", { className: "process-tabs" });
+    processes.forEach((process, index) => processTabs.append(element("div", {
+      className: `process-tab ${index === activeProcessIndex ? "active" : ""}`,
+      onclick: () => selectProcessTab(index),
+      textContent: process.processName
+    })));
+    const processContent = element("div", { id: "process-tab-content" });
+    processContent.append(renderProcessTabContent(processes[activeProcessIndex]));
+    const processCard = card("Process Flow", [processTabs, processContent]);
 
-          <!-- Process Flow Card -->
-          <div class="card">
-            <div class="card-title">Process Flow</div>
-            <div class="process-tabs">
-              ${processes.map((pr, idx) => `
-                <div class="process-tab ${idx === activeProcessIndex ? 'active' : ''}" onclick="selectProcessTab(${idx})">
-                  ${pr.processName}
-                </div>
-              `).join('')}
-            </div>
+    const documentBody = element("tbody");
+    if (docs.length === 0) {
+      documentBody.append(element("tr", {}, [
+        element("td", { colspan: "5", style: "text-align:center; padding: 20px; color: var(--text-muted);", textContent: "No supporting documents attached." })
+      ]));
+    } else {
+      docs.forEach(doc => {
+        const downloadUrl = `/api/documents/${encodeURIComponent(doc.documentId)}/download`;
+        const actions = [
+          element("a", { href: downloadUrl, target: "_blank", className: "pn-link", textContent: "Open" }),
+          element("a", { href: downloadUrl, className: "pn-link", download: "", textContent: "Download" })
+        ];
+        if (currentUser.isRd) actions.push(element("a", {
+          href: "#",
+          style: "color:#ef4444; margin-left:12px; font-weight:500;",
+          onclick: e => { e.preventDefault(); deleteDoc(doc.documentId); },
+          textContent: "Delete"
+        }));
+        documentBody.append(element("tr", {}, [
+          element("td", { style: "font-weight:600;", textContent: doc.documentName }),
+          element("td", { textContent: doc.documentType }),
+          element("td", { textContent: doc.revision }),
+          element("td", { textContent: doc.fileName }),
+          element("td", {}, [element("span", {}, actions)])
+        ]));
+      });
+    }
+    const documentsCard = card("Supporting Documents", [
+      element("div", { style: "display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;" }, [
+        element("div", { className: "card-title", style: "margin:0;", textContent: "Supporting Documents" }),
+        currentUser.isRd ? button("+ Upload Document", "btn btn-outline btn-sm", () => openModal("upload-modal")) : null
+      ]),
+      element("div", { className: "data-table-container" }, [
+        element("table", { className: "data-table" }, [
+          element("thead", {}, [element("tr", {}, [
+            ...["DOCUMENT NAME", "DOCUMENT TYPE", "REVISION", "FILE NAME", "ACTIONS"].map(value =>
+              element("th", { textContent: value }))
+          ])]),
+          documentBody
+        ])
+      ])
+    ]);
 
-            <div id="process-tab-content">
-              ${renderProcessTabContent(processes[activeProcessIndex])}
-            </div>
-          </div>
-
-          <!-- Supporting Documents Card -->
-          <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-              <div class="card-title" style="margin:0;">Supporting Documents</div>
-              ${currentUser.isRd ? `
-                <button class="btn btn-outline btn-sm" onclick="openModal('upload-modal')">+ Upload Document</button>
-              ` : ''}
-            </div>
-            <div class="data-table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>DOCUMENT NAME</th>
-                    <th>DOCUMENT TYPE</th>
-                    <th>REVISION</th>
-                    <th>FILE NAME</th>
-                    <th>ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${docs.length === 0 ? `
-                    <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No supporting documents attached.</td></tr>
-                  ` : docs.map(d => `
-                    <tr>
-                      <td style="font-weight:600;">${d.documentName}</td>
-                      <td>${d.documentType}</td>
-                      <td>${d.revision}</td>
-                      <td>${d.fileName}</td>
-                      <td>
-                        <a href="/api/documents/${d.documentId}/download" target="_blank" class="pn-link" style="margin-right:12px;">Open</a>
-                        <a href="/api/documents/${d.documentId}/download" class="pn-link" download>Download</a>
-                        ${currentUser.isRd ? `<a href="#" onclick="deleteDoc(${d.documentId})" style="color:#ef4444; margin-left:12px; font-weight:500;">Delete</a>` : ''}
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column (Sidebar Spec Card) -->
-        <div>
-          <div class="card">
-            <div class="card-title">Product Specification</div>
-            
-            <div class="spec-group-title">MATERIAL</div>
-            <div class="spec-row">
-              <span class="label">Material</span>
-              <span class="value">${spec.material || 'Ferrite'}</span>
-            </div>
-
-            <div class="spec-group-title">DIMENSIONS</div>
-            <div class="spec-row">
-              <span class="label">Length</span>
-              <span class="value">${spec.length || '25 mm'}</span>
-            </div>
-            <div class="spec-row">
-              <span class="label">Width</span>
-              <span class="value">${spec.width || '15 mm'}</span>
-            </div>
-            <div class="spec-row">
-              <span class="label">Height</span>
-              <span class="value">${spec.height || '10 mm'}</span>
-            </div>
-            <div class="spec-row">
-              <span class="label">Tolerance</span>
-              <span class="value">${spec.tolerance || '±0.1 mm'}</span>
-            </div>
-
-            <div class="spec-group-title">ELECTRICAL</div>
-            <div class="spec-row">
-              <span class="label">Inductance</span>
-              <span class="value">${spec.inductance || '10 µH'}</span>
-            </div>
-            <div class="spec-row">
-              <span class="label">Rated Current</span>
-              <span class="value">${spec.ratedCurrent || '5 A'}</span>
-            </div>
-            <div class="spec-row">
-              <span class="label">DCR</span>
-              <span class="value">${spec.dcr || '0.2 Ω'}</span>
-            </div>
-
-            <div class="spec-group-title">OPERATING CONDITIONS</div>
-            <div class="spec-row">
-              <span class="label">Operating Temp</span>
-              <span class="value">${spec.operatingTemperature || '-40 to 125 °C'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+    const specificationCard = card("Product Specification", [
+      element("div", { className: "spec-group-title", textContent: "MATERIAL" }),
+      specRow("Material", spec.material, "Ferrite"),
+      element("div", { className: "spec-group-title", textContent: "DIMENSIONS" }),
+      specRow("Length", spec.length, "25 mm"),
+      specRow("Width", spec.width, "15 mm"),
+      specRow("Height", spec.height, "10 mm"),
+      specRow("Tolerance", spec.tolerance, "±0.1 mm"),
+      element("div", { className: "spec-group-title", textContent: "ELECTRICAL" }),
+      specRow("Inductance", spec.inductance, "10 µH"),
+      specRow("Rated Current", spec.ratedCurrent, "5 A"),
+      specRow("DCR", spec.dcr, "0.2 Ω"),
+      element("div", { className: "spec-group-title", textContent: "OPERATING CONDITIONS" }),
+      specRow("Operating Temp", spec.operatingTemperature, "-40 to 125 °C")
+    ]);
+    root.append(element("div", { className: "detail-grid" }, [
+      element("div", {}, [productCard, manufacturingCard, processCard, documentsCard]),
+      element("div", {}, [specificationCard])
+    ]));
+    main.replaceChildren(root);
   } catch (err) {
     console.error("Error loading detail view:", err);
   }
 }
 
+function specRow(label, value, fallback) {
+  return element("div", { className: "spec-row" }, [
+    element("span", { className: "label", textContent: label }),
+    element("span", { className: "value", textContent: value || fallback })
+  ]);
+}
+
 function selectProcessTab(index) {
   activeProcessIndex = index;
-  if (!currentProduct || !currentProduct.processes) return;
-  const tabs = document.querySelectorAll(".process-tab");
-  tabs.forEach((t, idx) => {
-    if (idx === index) t.classList.add("active");
-    else t.classList.remove("active");
+  if (!currentProduct?.processes) return;
+  document.querySelectorAll(".process-tab").forEach((tab, tabIndex) => {
+    tab.classList.toggle("active", tabIndex === index);
   });
-  document.getElementById("process-tab-content").innerHTML = renderProcessTabContent(currentProduct.processes[index]);
+  const content = document.getElementById("process-tab-content");
+  if (content) content.replaceChildren(renderProcessTabContent(currentProduct.processes[index]));
 }
 
-function renderProcessTabContent(pr) {
-  if (!pr) return `<div style="padding: 20px; color: var(--text-muted);">No process details available.</div>`;
-  
-  const params = pr.parameters || [];
-  return `
-    <div class="process-details-card">
-      <div style="font-weight:700; margin-bottom:12px; font-size:14px;">Process Details</div>
-      <div class="form-grid">
-        <div class="info-group">
-          <div class="info-label">PROCESS NAME</div>
-          <div class="info-box">${pr.processName}</div>
-        </div>
-        <div class="info-group">
-          <div class="info-label">MACHINE</div>
-          <div class="info-box">${pr.machineName || 'Machine-07'}</div>
-        </div>
-      </div>
-      <div class="info-group">
-        <div class="info-label">TOOLING</div>
-        <div class="info-box">${pr.toolingName || 'Tool-23'}</div>
-      </div>
-      <div class="info-group">
-        <div class="info-label">PROCESS DESCRIPTION</div>
-        <div class="info-box">${pr.processDescription || 'Standard process sequence for production.'}</div>
-      </div>
-    </div>
-
-    <div class="data-table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>PARAMETER</th>
-            <th>VALUE</th>
-            <th>UNIT</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${params.length === 0 ? `
-            <tr><td colspan="3" style="text-align:center; padding:16px; color:var(--text-muted);">No parameters defined.</td></tr>
-          ` : params.map(p => `
-            <tr>
-              <td style="font-weight:600;">${p.parameterName}</td>
-              <td>${p.parameterValue}</td>
-              <td>${p.unit}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
+function renderProcessTabContent(process) {
+  if (!process) {
+    return element("div", { style: "padding: 20px; color: var(--text-muted);", textContent: "No process details available." });
+  }
+  const params = process.parameters || [];
+  const body = element("tbody");
+  if (params.length === 0) {
+    body.append(element("tr", {}, [
+      element("td", { colspan: "3", style: "text-align:center; padding:16px; color:var(--text-muted);", textContent: "No parameters defined." })
+    ]));
+  } else {
+    params.forEach(parameter => body.append(element("tr", {}, [
+      element("td", { style: "font-weight:600;", textContent: parameter.parameterName }),
+      element("td", { textContent: parameter.parameterValue }),
+      element("td", { textContent: parameter.unit })
+    ])));
+  }
+  return element("div", {}, [
+    element("div", { className: "process-details-card" }, [
+      element("div", { style: "font-weight:700; margin-bottom:12px; font-size:14px;", textContent: "Process Details" }),
+      element("div", { className: "form-grid" }, [
+        labelValue("PROCESS NAME", process.processName),
+        labelValue("MACHINE", process.machineName, "info-box")
+      ]),
+      labelValue("TOOLING", process.toolingName || "Tool-23"),
+      labelValue("PROCESS DESCRIPTION", process.processDescription, "info-box")
+    ]),
+    element("div", { className: "data-table-container" }, [
+      element("table", { className: "data-table" }, [
+        element("thead", {}, [element("tr", {}, [
+          ...["PARAMETER", "VALUE", "UNIT"].map(value => element("th", { textContent: value }))
+        ])]),
+        body
+      ])
+    ])
+  ]);
 }
 
-// Render Add / Edit Product Form (Image 4 Mockup)
+function inputField(id, value, label, type = "text") {
+  return element("div", { className: "form-group" }, [
+    element("label", { htmlFor: id, textContent: label }),
+    element("input", { id, className: "form-control", type, value: value ?? "" })
+  ]);
+}
+
+function selectField(id, value, label, options) {
+  const select = element("select", { id, className: "form-control" });
+  options.forEach(option => select.append(element("option", {
+    value: option,
+    selected: option === value,
+    textContent: option
+  })));
+  return element("div", { className: "form-group" }, [
+    element("label", { htmlFor: id, textContent: label }),
+    select
+  ]);
+}
+
+function textAreaField(id, value, label) {
+  return element("div", { className: "form-group" }, [
+    element("label", { htmlFor: id, textContent: label }),
+    element("textarea", { id, className: "form-control" }, [text(value)])
+  ]);
+}
+
 async function renderFormView(productId = null) {
-  const main = document.getElementById("main-content");
-  let p = {
+  let product = {
     partNumber: "",
     productName: "",
     productType: "Inductor",
@@ -463,214 +441,104 @@ async function renderFormView(productId = null) {
     currentRevision: "Revision A",
     description: "",
     specification: { material: "Ferrite", length: "25 mm", width: "15 mm", height: "10 mm", tolerance: "±0.1 mm", inductance: "10 µH", ratedCurrent: "5 A", dcr: "0.2 Ω", operatingTemperature: "-40 to 125 °C" },
-    manufacturingInfo: { factory: "Bintan", productionLine: "Line 03", productionType: "Automated Assembly", manufacturingNotes: "" },
-    processes: [
-      { processName: "Winding", processDescription: "Winding copper wire around core", parameters: [{ parameterName: "Tension", parameterValue: "3.0", unit: "N" }] },
-      { processName: "Soldering", processDescription: "Soldering terminal leads", parameters: [{ parameterName: "Temp", parameterValue: "260", unit: "°C" }] },
-      { processName: "Molding", processDescription: "Epoxy encapsulation", parameters: [{ parameterName: "Temperature", parameterValue: "175", unit: "°C" }, { parameterName: "Pressure", parameterValue: "5.5", unit: "bar" }] }
-    ]
+    manufacturingInfo: { factory: "Bintan", productionLine: "Line 03", productionType: "Automated Assembly", manufacturingNotes: "" }
   };
-
   if (productId) {
     const res = await fetch(`/api/products/${productId}`);
-    if (res.ok) p = await res.json();
+    if (res.ok) product = await res.json();
   }
-
-  main.innerHTML = `
-    <div class="breadcrumb">
-      <a href="#" onclick="switchView('list')">Dashboard</a>
-      <span>&rsaquo;</span>
-      <span>${productId ? 'Edit Product' : 'Add New Product'}</span>
-    </div>
-
-    <div class="page-header">
-      <div class="page-title-group">
-        <h1>${productId ? 'Edit Product: ' + p.partNumber : 'Add New Product'}</h1>
-      </div>
-      <div style="display:flex; gap:12px;">
-        <button class="btn btn-outline" onclick="switchView('list')">Cancel</button>
-        <button class="btn btn-secondary" onclick="saveProductForm(${productId ? productId : 'null'}, 'Draft')">Save as Draft</button>
-        <button class="btn btn-primary" onclick="saveProductForm(${productId ? productId : 'null'}, 'Released')">Save Product</button>
-      </div>
-    </div>
-
-    <div class="detail-grid">
-      <!-- Left Form Section -->
-      <div>
-        <!-- Product Info Form -->
-        <div class="card">
-          <div class="card-title">Product Information</div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Part Number</label>
-              <input type="text" id="form-pn" class="form-control" value="${p.partNumber}" placeholder="Enter Part Number" required>
-            </div>
-            <div class="form-group">
-              <label>Product Name</label>
-              <input type="text" id="form-name" class="form-control" value="${p.productName}" placeholder="Enter Product Name" required>
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Product Type</label>
-              <select id="form-type" class="form-control">
-                <option value="Inductor" ${p.productType === 'Inductor' ? 'selected' : ''}>Inductor</option>
-                <option value="Transformer" ${p.productType === 'Transformer' ? 'selected' : ''}>Transformer</option>
-                <option value="Sensor" ${p.productType === 'Sensor' ? 'selected' : ''}>Sensor</option>
-                <option value="Choke" ${p.productType === 'Choke' ? 'selected' : ''}>Choke</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Status</label>
-              <select id="form-status" class="form-control">
-                <option value="Draft" ${p.status === 'Draft' ? 'selected' : ''}>Draft</option>
-                <option value="Released" ${p.status === 'Released' ? 'selected' : ''}>Released</option>
-                <option value="Obsolete" ${p.status === 'Obsolete' ? 'selected' : ''}>Obsolete</option>
-                <option value="Pending Review" ${p.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Current Revision</label>
-            <input type="text" id="form-rev" class="form-control" value="${p.currentRevision || 'Revision A'}" placeholder="Enter Revision">
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea id="form-desc" class="form-control" placeholder="Enter Description">${p.description || ''}</textarea>
-          </div>
-        </div>
-
-        <!-- Manufacturing Info Form -->
-        <div class="card">
-          <div class="card-title">Manufacturing Information</div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Factory</label>
-              <select id="form-factory" class="form-control">
-                <option value="Bintan" ${(p.manufacturingInfo?.factory || '') === 'Bintan' ? 'selected' : ''}>Bintan</option>
-                <option value="Alpha Facility" ${(p.manufacturingInfo?.factory || '') === 'Alpha Facility' ? 'selected' : ''}>Alpha Facility</option>
-                <option value="Beta Facility" ${(p.manufacturingInfo?.factory || '') === 'Beta Facility' ? 'selected' : ''}>Beta Facility</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Production Line</label>
-              <input type="text" id="form-line" class="form-control" value="${p.manufacturingInfo?.productionLine || 'Line 03'}">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Production Type</label>
-            <input type="text" id="form-prodtype" class="form-control" value="${p.manufacturingInfo?.productionType || 'Automated Assembly'}">
-          </div>
-          <div class="form-group">
-            <label>Manufacturing Notes</label>
-            <textarea id="form-mfgnotes" class="form-control" placeholder="Enter Manufacturing Notes">${p.manufacturingInfo?.manufacturingNotes || ''}</textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: Specs & Image Form -->
-      <div>
-        <div class="card">
-          <div class="card-title">Finished Product Image</div>
-          <div class="img-upload-box" onclick="alert('Image browser dialog opened. Image selected.')">
-            <div class="img-upload-icon">🖼️</div>
-            <div style="font-size:13px; color:var(--text-muted);">No image selected</div>
-            <button class="btn btn-outline btn-sm" style="margin-top:12px;">Browse...</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Product Specification</div>
-          <div class="form-group">
-            <label>Material</label>
-            <input type="text" id="spec-material" class="form-control" value="${p.specification?.material || 'Ferrite'}">
-          </div>
-          <div class="spec-group-title">DIMENSIONS</div>
-          <div class="form-group"><label>Length</label><input type="text" id="spec-length" class="form-control" value="${p.specification?.length || '25 mm'}"></div>
-          <div class="form-group"><label>Width</label><input type="text" id="spec-width" class="form-control" value="${p.specification?.width || '15 mm'}"></div>
-          <div class="form-group"><label>Height</label><input type="text" id="spec-height" class="form-control" value="${p.specification?.height || '10 mm'}"></div>
-          <div class="form-group"><label>Tolerance</label><input type="text" id="spec-tolerance" class="form-control" value="${p.specification?.tolerance || '±0.1 mm'}"></div>
-
-          <div class="spec-group-title">ELECTRICAL</div>
-          <div class="form-group"><label>Inductance</label><input type="text" id="spec-inductance" class="form-control" value="${p.specification?.inductance || '10 µH'}"></div>
-          <div class="form-group"><label>Rated Current</label><input type="text" id="spec-current" class="form-control" value="${p.specification?.ratedCurrent || '5 A'}"></div>
-          <div class="form-group"><label>DCR</label><input type="text" id="spec-dcr" class="form-control" value="${p.specification?.dcr || '0.2 Ω'}"></div>
-
-          <div class="spec-group-title">OPERATING CONDITIONS</div>
-          <div class="form-group"><label>Operating Temperature</label><input type="text" id="spec-temp" class="form-control" value="${p.specification?.operatingTemperature || '-40 to 125 °C'}"></div>
-        </div>
-      </div>
-    </div>
-  `;
+  const spec = product.specification || {};
+  const mfg = product.manufacturingInfo || {};
+  const main = document.getElementById("main-content");
+  const root = element("div");
+  root.append(
+    element("div", { className: "breadcrumb" }, [
+      element("a", { href: "#", onclick: e => { e.preventDefault(); switchView("list"); }, textContent: "Dashboard" }),
+      element("span", { textContent: productId ? " › Edit Product" : " › Add New Product" })
+    ]),
+    element("div", { className: "page-header" }, [
+      element("div", { className: "page-title-group" }, [
+        element("h1", { textContent: productId ? `Edit Product: ${product.partNumber || ""}` : "Add New Product" })
+      ]),
+      element("div", { style: "display:flex; gap:12px;" }, [
+        button("Cancel", "btn btn-outline", () => switchView("list")),
+        button("Save as Draft", "btn btn-secondary", () => saveProductForm(productId, "Draft")),
+        button("Save Product", "btn btn-primary", () => saveProductForm(productId, "Released"))
+      ])
+    ])
+  );
+  const info = card("Product Information", [
+    element("div", { className: "form-grid" }, [
+      inputField("form-pn", product.partNumber, "Part Number"),
+      inputField("form-name", product.productName, "Product Name")
+    ]),
+    element("div", { className: "form-grid" }, [
+      selectField("form-type", product.productType, "Product Type", ["Inductor", "Transformer", "Sensor", "Choke"]),
+      selectField("form-status", product.status, "Status", ["Draft", "Released", "Obsolete", "Pending Review"])
+    ]),
+    inputField("form-rev", product.currentRevision || "Revision A", "Current Revision"),
+    textAreaField("form-desc", product.description, "Description")
+  ]);
+  const manufacturing = card("Manufacturing Information", [
+    element("div", { className: "form-grid" }, [
+      selectField("form-factory", mfg.factory || "Bintan", "Factory", ["Bintan", "Alpha Facility", "Beta Facility"]),
+      inputField("form-line", mfg.productionLine || "Line 03", "Production Line")
+    ]),
+    inputField("form-prodtype", mfg.productionType || "Automated Assembly", "Production Type"),
+    textAreaField("form-mfgnotes", mfg.manufacturingNotes, "Manufacturing Notes")
+  ]);
+  const specifications = card("Product Specification", [
+    inputField("spec-material", spec.material || "Ferrite", "Material"),
+    inputField("spec-length", spec.length || "25 mm", "Length"),
+    inputField("spec-width", spec.width || "15 mm", "Width"),
+    inputField("spec-height", spec.height || "10 mm", "Height"),
+    inputField("spec-tolerance", spec.tolerance || "±0.1 mm", "Tolerance"),
+    inputField("spec-inductance", spec.inductance || "10 µH", "Inductance"),
+    inputField("spec-current", spec.ratedCurrent || "5 A", "Rated Current"),
+    inputField("spec-dcr", spec.dcr || "0.2 Ω", "DCR"),
+    inputField("spec-temp", spec.operatingTemperature || "-40 to 125 °C", "Operating Temperature")
+  ]);
+  root.append(element("div", { className: "detail-grid" }, [
+    element("div", {}, [info, manufacturing]),
+    element("div", {}, [specifications])
+  ]));
+  main.replaceChildren(root);
 }
 
 async function saveProductForm(productId, targetStatus) {
-  const pn = document.getElementById("form-pn").value.trim();
-  const name = document.getElementById("form-name").value.trim();
+  const value = id => document.getElementById(id).value;
+  const pn = value("form-pn").trim();
+  const name = value("form-name").trim();
   if (!pn || !name) {
     alert("Part Number and Product Name are required.");
     return;
   }
-
   const dto = {
     productId: productId || 0,
     partNumber: pn,
     productName: name,
-    productType: document.getElementById("form-type").value,
-    status: targetStatus || document.getElementById("form-status").value,
-    currentRevision: document.getElementById("form-rev").value,
-    description: document.getElementById("form-desc").value,
+    productType: value("form-type"),
+    status: targetStatus || value("form-status"),
+    currentRevision: value("form-rev"),
+    description: value("form-desc"),
     imagePath: "/images/power_inductor.png",
     specification: {
-      material: document.getElementById("spec-material").value,
-      length: document.getElementById("spec-length").value,
-      width: document.getElementById("spec-width").value,
-      height: document.getElementById("spec-height").value,
-      tolerance: document.getElementById("spec-tolerance").value,
-      inductance: document.getElementById("spec-inductance").value,
-      ratedCurrent: document.getElementById("spec-current").value,
-      dcr: document.getElementById("spec-dcr").value,
-      operatingTemperature: document.getElementById("spec-temp").value
+      material: value("spec-material"), length: value("spec-length"), width: value("spec-width"),
+      height: value("spec-height"), tolerance: value("spec-tolerance"), inductance: value("spec-inductance"),
+      ratedCurrent: value("spec-current"), dcr: value("spec-dcr"), operatingTemperature: value("spec-temp")
     },
     manufacturingInfo: {
-      factory: document.getElementById("form-factory").value,
-      productionLine: document.getElementById("form-line").value,
-      productionType: document.getElementById("form-prodtype").value,
-      manufacturingNotes: document.getElementById("form-mfgnotes").value
-    },
-    processes: [
-      {
-        processOrder: 1,
-        processName: "Winding",
-        processDescription: "High precision wire winding process",
-        parameters: [{ parameterName: "Spindle Speed", parameterValue: "3500", unit: "rpm" }]
-      },
-      {
-        processOrder: 2,
-        processName: "Molding",
-        processDescription: "Epoxy encapsulation process",
-        parameters: [{ parameterName: "Temperature", parameterValue: "175", unit: "°C" }, { parameterName: "Pressure", parameterValue: "5.5", unit: "bar" }]
-      }
-    ]
-  };
-
-  try {
-    let url = "/api/products";
-    let method = "POST";
-    if (productId) {
-      url = `/api/products/${productId}`;
-      method = "PUT";
+      factory: value("form-factory"), productionLine: value("form-line"),
+      productionType: value("form-prodtype"), manufacturingNotes: value("form-mfgnotes")
     }
-
+  };
+  try {
+    const url = productId ? `/api/products/${productId}` : "/api/products";
     const res = await fetch(url, {
-      method: method,
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Name": currentUser.name
-      },
+      method: productId ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dto)
     });
-
     if (res.ok) {
       const saved = await res.json();
       alert("Product saved successfully!");
@@ -683,7 +551,6 @@ async function saveProductForm(productId, targetStatus) {
   }
 }
 
-// Modal Helpers
 function openModal(id) {
   document.getElementById(id).classList.add("active");
 }
@@ -698,27 +565,20 @@ async function submitDocumentUpload() {
   const type = document.getElementById("doc-type-input").value;
   const rev = document.getElementById("doc-rev-input").value.trim();
   const fileInput = document.getElementById("doc-file-input");
-
   if (!name || fileInput.files.length === 0) {
     alert("Document name and file selection are required.");
     return;
   }
-
   const formData = new FormData();
   formData.append("documentName", name);
   formData.append("documentType", type);
   formData.append("revision", rev);
   formData.append("file", fileInput.files[0]);
-
   try {
     const res = await fetch(`/api/products/${currentProduct.productId}/documents`, {
       method: "POST",
-      headers: {
-        "X-User-Name": currentUser.name
-      },
       body: formData
     });
-
     if (res.ok) {
       closeModal("upload-modal");
       renderDetailView(currentProduct.productId);
@@ -733,10 +593,8 @@ async function submitDocumentUpload() {
 async function deleteDoc(docId) {
   if (!confirm("Are you sure you want to delete this document?")) return;
   try {
-    const res = await fetch(`/api/documents/${docId}`, { method: "DELETE" });
-    if (res.ok) {
-      renderDetailView(currentProduct.productId);
-    }
+    const res = await fetch(`/api/documents/${encodeURIComponent(docId)}`, { method: "DELETE" });
+    if (res.ok) renderDetailView(currentProduct.productId);
   } catch (err) {
     console.error("Delete doc error:", err);
   }

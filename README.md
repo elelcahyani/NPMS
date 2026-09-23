@@ -36,18 +36,25 @@ NPMS/
 
 ---
 
-## Akun Default (Seed)
+## Konfigurasi Keamanan
 
-Akun berikut otomatis dibuat saat aplikasi pertama kali dijalankan:
+Tidak ada akun bawaan yang dibundel ke dalam repo. Atur kredensial admin melalui variabel lingkungan sebelum menjalankan aplikasi:
 
-| Username       | Password      | Role          |
-|----------------|---------------|---------------|
-| superadmin     | Admin@1234    | Super Admin   |
-| rd_user        | Rdteam@1234   | R&D Team      |
-| store_manager  | Store@1234    | Store Manager |
-| viewer         | Viewer@1234   | Viewer        |
+```bash
+set NPMS_API_KEY=replace-with-strong-api-key
+set NPMS_ADMIN_USERNAME=replace-with-admin-username
+set NPMS_ADMIN_PASSWORD=replace-with-strong-password
+```
 
-> **Ganti password default** setelah login pertama.
+Pada Linux/macOS:
+
+```bash
+export NPMS_API_KEY=replace-with-strong-api-key
+export NPMS_ADMIN_USERNAME=replace-with-admin-username
+export NPMS_ADMIN_PASSWORD=replace-with-strong-password
+```
+
+> Aplikasi menolak semua request API sampai variabel `NPMS_API_KEY` diatur.
 
 ---
 
@@ -90,7 +97,7 @@ Atau buka `NPMS.Desktop.csproj` langsung di Visual Studio 2022+ dan tekan **F5**
 
 **5. Login**
 
-Database SQLite (`npms_desktop.db`) akan otomatis dibuat di folder output (`bin/Debug/net10.0-windows/`) beserta seed data. Gunakan salah satu akun default di atas.
+Database SQLite (`npms_desktop.db`) akan otomatis dibuat di folder output (`bin/Debug/net10.0-windows/`) beserta seed data. Tidak ada akun default; gunakan kredensial yang dikonfigurasi melalui variabel lingkungan.
 
 ---
 

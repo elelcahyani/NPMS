@@ -1,8 +1,15 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using NPMS.Core.Data;
 using NPMS.Core.Services;
+using NPMS.WebAPI.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication("NPMSApiKey")
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>("NPMSApiKey", _ => { });
+
+builder.Services.AddAuthorization();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -25,6 +32,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+var configuredApiKey = builder.Configuration["Authentication:ApiKey"] ?? Environment.GetEnvironmentVariable("NPMS_API_KEY") ?? string.Empty;
+if (string.IsNullOrWhiteSpace(configuredApiKey))
+{
+    Console.WriteLine("WARNING: NPMS_API_KEY is not configured. The API will reject all requests until it is set.");
+}
+
 var app = builder.Build();
 
 // Auto seed database
@@ -37,6 +50,7 @@ using (var scope = app.Services.CreateScope())
 app.UseCors("AllowAll");
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -17,7 +17,6 @@ namespace NPMS.Desktop
             TxtUsername.Focus();
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e) => TryLogin();
 
         private void Input_KeyDown(object sender, KeyEventArgs e)
         {

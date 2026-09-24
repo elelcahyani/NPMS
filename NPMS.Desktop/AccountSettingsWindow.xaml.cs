@@ -76,6 +76,41 @@ namespace NPMS.Desktop
             dlg.ShowDialog();
         }
 
+        private void BtnEditUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.DataContext is not UserViewModel vm) return;
+
+            var roles = _db.Roles.ToList();
+            var dlg = new EditUserDialog(vm, roles) { Owner = this };
+            if (dlg.ShowDialog() != true) return;
+
+            if (vm.UserId == _currentUser.UserId && !dlg.IsAccountActive)
+            {
+                MessageBox.Show("You cannot deactivate your own account.", "Not Allowed",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var duplicate = _db.Users.Any(u =>
+                u.UserId != vm.UserId &&
+                u.Username.ToLower() == dlg.EditedUsername.ToLower());
+            if (duplicate)
+            {
+                MessageBox.Show("Username tersebut sudah digunakan.", "Invalid Username",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var user = _db.Users.FirstOrDefault(u => u.UserId == vm.UserId);
+            if (user == null) return;
+
+            user.Username = dlg.EditedUsername;
+            user.RoleId = dlg.SelectedRoleId;
+            user.IsActive = dlg.IsAccountActive;
+            _db.SaveChanges();
+            LoadUsers();
+        }
+
         private void BtnDeleteUser_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button btn || btn.DataContext is not UserViewModel vm) return;

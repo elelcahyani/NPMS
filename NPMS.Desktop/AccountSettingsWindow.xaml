@@ -47,7 +47,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="220"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="USERNAME" FontSize="10" FontWeight="Bold" Foreground="#6B7280"
                                        Margin="16,0" VerticalAlignment="Center"/>
@@ -68,7 +68,7 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="160"/>
                                                     <ColumnDefinition Width="80"/>
-                                                    <ColumnDefinition Width="160"/>
+                                                    <ColumnDefinition Width="220"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="{Binding Username}"
                                                            FontSize="13" FontWeight="SemiBold"
@@ -80,6 +80,10 @@
                                                            FontSize="12" Foreground="{Binding StatusColor}"
                                                            VerticalAlignment="Center"/>
                                                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="Edit" Click="BtnEditUser_Click"
+                                                            Background="Transparent" Foreground="#2563EB"
+                                                            BorderThickness="0" FontSize="12" Cursor="Hand"
+                                                            Margin="0,0,8,0" DataContext="{Binding}"/>
                                                     <Button Content="Change Password" Click="BtnChangeUserPwd_Click"
                                                             Background="Transparent" Foreground="#2563EB"
                                                             BorderThickness="0" FontSize="12" Cursor="Hand"

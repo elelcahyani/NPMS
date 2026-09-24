@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Add New User" Height="420" Width="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#F9FAFB">
+        Background="#F8FAFC"
+        FontFamily="Segoe UI" FontSize="12">
     <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -38,7 +39,7 @@
             <Button Content="Cancel" Click="BtnCancel_Click" HorizontalAlignment="Left"
                     Width="90" Height="36" Background="White" Foreground="#374151"
                     BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
-            <Border HorizontalAlignment="Right" Background="#2563EB" CornerRadius="6">
+            <Border HorizontalAlignment="Right" Background="#6D28D9" CornerRadius="6">
                 <Button Content="Add User" Click="BtnAdd_Click"
                         Width="110" Height="36" Background="Transparent"
                         Foreground="White" FontWeight="SemiBold"

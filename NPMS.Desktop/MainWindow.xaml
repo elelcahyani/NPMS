@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="New Product Management System (NPMS)" Height="800" Width="1280"
-        WindowStartupLocation="CenterScreen" Background="#F8FAFC"
+        WindowStartupLocation="CenterScreen" Background="#F1F5F9"
         FontFamily="Segoe UI" FontSize="12">
     <Window.Resources>
         <Style x:Key="FilterComboStyle" TargetType="ComboBox">
@@ -80,7 +80,7 @@
 
 
         <!-- MAIN CONTENT -->
-        <Grid Grid.Column="1" Background="White">
+        <Grid Grid.Column="1" Background="#F1F5F9">
             <Grid.RowDefinitions>
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="*"/>
@@ -234,7 +234,7 @@
             </Border>
 
             <!-- Body -->
-            <Grid Grid.Row="1" Background="#F9FAFB">
+            <Grid Grid.Row="1" Background="#F1F5F9">
 
                 <!-- LIST VIEW -->
                 <Grid x:Name="ViewList" Visibility="Visible" Margin="16,14,16,14">
@@ -342,12 +342,12 @@
                                         <Setter Property="BorderBrush" Value="#EAEAEA"/>
                                         <Setter Property="SnapsToDevicePixels" Value="True"/>
                                         <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="White"/>
+                                                <Setter Property="BorderBrush" Value="#EAEAEA"/>
+                                            </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#FAF5FF"/>
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#F3E8FF"/>
-                                                <Setter Property="BorderBrush" Value="#EAEAEA"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>

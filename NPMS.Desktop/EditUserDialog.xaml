@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Edit User" Height="400" Width="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#F9FAFB">
+        Background="#F8FAFC"
+        FontFamily="Segoe UI" FontSize="12">
     <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -35,16 +36,18 @@
             <Button Content="Cancel" Click="BtnCancel_Click" HorizontalAlignment="Left"
                     Width="90" Height="36" Background="White" Foreground="#374151"
                     BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
-            <Button Content="Change Password" Click="BtnChangePassword_Click"
-                    HorizontalAlignment="Center" Width="130" Height="36"
-                    Background="White" Foreground="#6D28D9"
-                    BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
-            <Border HorizontalAlignment="Right" Background="#6D28D9" CornerRadius="4">
-                <Button Content="Save Changes" Click="BtnSave_Click"
-                        Width="120" Height="36" Background="Transparent"
-                        Foreground="White" FontWeight="SemiBold"
-                        BorderThickness="0" Cursor="Hand"/>
-            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Change Password" Click="BtnChangePassword_Click"
+                        Width="130" Height="36" Margin="0,0,12,0"
+                        Background="White" Foreground="#6D28D9"
+                        BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
+                <Border Background="#6D28D9" CornerRadius="6">
+                    <Button Content="Save Changes" Click="BtnSave_Click"
+                            Width="120" Height="36" Background="Transparent"
+                            Foreground="White" FontWeight="SemiBold"
+                            BorderThickness="0" Cursor="Hand"/>
+                </Border>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

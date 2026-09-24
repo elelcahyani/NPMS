@@ -495,6 +495,24 @@ namespace NPMS.Desktop
             return "";
         }
 
+        // ─── TOP NAVBAR NAVIGATION ──────────────────────────────────────────
+
+        private void TabNav_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is RadioButton rb && rb.Tag is string targetName)
+            {
+                ShowTabPanel(targetName);
+            }
+        }
+
+        private void ShowTabPanel(string panelName)
+        {
+            PanelGeneralInfo.Visibility = (panelName == "PanelGeneralInfo") ? Visibility.Visible : Visibility.Collapsed;
+            PanelProcess.Visibility = (panelName == "PanelProcess") ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnToggleProcess_Click(object sender, RoutedEventArgs e) => ShowTabPanel("PanelProcess");
+
         // ─── CANCEL / SAVE ───────────────────────────────────────────────────
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)

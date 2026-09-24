@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Upload Document" Height="340" Width="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="White">
+        Background="#F8FAFC"
+        FontFamily="Segoe UI" FontSize="12">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -41,7 +42,7 @@
             <Button Content="Cancel" Click="BtnCancel_Click" HorizontalAlignment="Left"
                     Width="90" Height="34" Background="White" Foreground="#374151"
                     BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand"/>
-            <Border HorizontalAlignment="Right" Background="#2563EB" CornerRadius="6">
+            <Border HorizontalAlignment="Right" Background="#6D28D9" CornerRadius="6">
                 <Button Content="Confirm Upload" Click="BtnConfirm_Click"
                         Width="130" Height="34" Background="Transparent"
                         Foreground="White" FontWeight="SemiBold"

@@ -104,7 +104,7 @@ namespace NPMS.Desktop
             if (TxtSearch.Text == "Search Part Number or Product Name...")
             {
                 TxtSearch.Text = "";
-                TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(55, 65, 81));
+                TxtSearch.Foreground = new SolidColorBrush(Colors.White);
             }
         }
 
@@ -113,7 +113,7 @@ namespace NPMS.Desktop
             if (string.IsNullOrWhiteSpace(TxtSearch.Text))
             {
                 TxtSearch.Text = "Search Part Number or Product Name...";
-                TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128));
+                TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(216, 180, 254));
             }
         }
 
@@ -157,7 +157,7 @@ namespace NPMS.Desktop
         private void BtnClearFilters_Click(object sender, RoutedEventArgs e)
         {
             TxtSearch.Text = "Search Part Number or Product Name...";
-            TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128));
+            TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(216, 180, 254));
             CmbFilterPartType.SelectedIndex = 0;
             CmbFilterFamily.SelectedIndex = 0;
             CmbFilterStatus.SelectedIndex = 0;
@@ -483,6 +483,12 @@ namespace NPMS.Desktop
             }
             var win = new AccountSettingsWindow(_service, _currentUser) { Owner = this };
             win.ShowDialog();
+        }
+
+        private void NavYourAccount_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Your Account is currently under development.",
+                "Your Account", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)

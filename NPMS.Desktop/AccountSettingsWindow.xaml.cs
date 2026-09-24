@@ -109,6 +109,12 @@ namespace NPMS.Desktop
             user.IsActive = dlg.IsAccountActive;
             _db.SaveChanges();
             LoadUsers();
+
+            if (dlg.ChangePasswordRequested)
+            {
+                var passwordDialog = new ChangePasswordWindow(_service, vm.UserId) { Owner = this };
+                passwordDialog.ShowDialog();
+            }
         }
 
         private void BtnDeleteUser_Click(object sender, RoutedEventArgs e)

@@ -12,6 +12,7 @@ namespace NPMS.Desktop
         public string EditedUsername { get; private set; } = "";
         public int SelectedRoleId { get; private set; }
         public bool IsAccountActive { get; private set; }
+        public bool ChangePasswordRequested { get; private set; }
 
         public EditUserDialog(UserViewModel user, List<Role> roles)
         {
@@ -50,6 +51,13 @@ namespace NPMS.Desktop
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+            Close();
+        }
+
+        private void BtnChangePassword_Click(object sender, RoutedEventArgs e)
+        {
+            ChangePasswordRequested = true;
+            DialogResult = true;
             Close();
         }
 

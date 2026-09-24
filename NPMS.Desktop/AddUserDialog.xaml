@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Add New User" Height="420" Width="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="White">
+        Background="#F9FAFB">
     <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -11,8 +11,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Add New User" FontSize="15" FontWeight="Bold"
-                   Foreground="#111827" Margin="0,0,0,24"/>
+        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB"
+                BorderThickness="0,0,0,1" Padding="0,0,0,16" Margin="0,0,0,16">
+            <TextBlock Text="Add New User" FontSize="17" FontWeight="Bold"
+                       Foreground="#111827"/>
+        </Border>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,24">
             <TextBlock Text="Username" FontSize="11" FontWeight="SemiBold" Foreground="#6B7280" Margin="0,0,0,4"/>

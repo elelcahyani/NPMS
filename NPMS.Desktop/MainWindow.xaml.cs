@@ -104,7 +104,7 @@ namespace NPMS.Desktop
             if (TxtSearch.Text == "Search Part Number or Product Name...")
             {
                 TxtSearch.Text = "";
-                TxtSearch.Foreground = Brushes.Black;
+                TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(55, 65, 81));
             }
         }
 
@@ -113,7 +113,7 @@ namespace NPMS.Desktop
             if (string.IsNullOrWhiteSpace(TxtSearch.Text))
             {
                 TxtSearch.Text = "Search Part Number or Product Name...";
-                TxtSearch.Foreground = Brushes.Gray;
+                TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128));
             }
         }
 
@@ -157,7 +157,7 @@ namespace NPMS.Desktop
         private void BtnClearFilters_Click(object sender, RoutedEventArgs e)
         {
             TxtSearch.Text = "Search Part Number or Product Name...";
-            TxtSearch.Foreground = Brushes.Gray;
+            TxtSearch.Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128));
             CmbFilterPartType.SelectedIndex = 0;
             CmbFilterFamily.SelectedIndex = 0;
             CmbFilterStatus.SelectedIndex = 0;

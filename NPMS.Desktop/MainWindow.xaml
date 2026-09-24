@@ -210,8 +210,8 @@
                                        Margin="8,0,5,0" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSearch" Grid.Column="1"
                                      Text="Search Part Number or Product Name..."
-                                     Foreground="#DDD6FE" FontSize="11"
-                                     VerticalContentAlignment="Center" Padding="0,0,8,0"
+                                     Foreground="#6B7280" FontSize="12"
+                                     VerticalContentAlignment="Center" Padding="0,0,10,0"
                                      BorderThickness="0" Background="Transparent"
                                      GotFocus="TxtSearch_GotFocus" LostFocus="TxtSearch_LostFocus"
                                      KeyUp="TxtSearch_KeyUp"/>

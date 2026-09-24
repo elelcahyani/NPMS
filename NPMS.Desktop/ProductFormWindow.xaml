@@ -19,6 +19,17 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#374151"/>
+        </Style>
+        <Style x:Key="FormComboStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#374151"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style x:Key="PlaceholderInputStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
             <Setter Property="Foreground" Value="#9CA3AF"/>
@@ -83,18 +94,18 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="56"/>
+            <RowDefinition Height="60"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Top Bar -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="24,0">
+        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="28,0">
             <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="New Product Management System" FontSize="16" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center"/>
+                <TextBlock Text="New Product Management System" FontSize="17" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button x:Name="BtnCancel" Click="BtnCancel_Click" Content="Cancel"
                             Height="34" Padding="16,0" Background="White"
@@ -116,7 +127,7 @@
 
         <!-- Body -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#F9FAFB">
-            <Grid Margin="24,20,24,24">
+            <Grid Margin="28,24,28,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="220"/>
@@ -181,8 +192,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Product Type" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox x:Name="CmbProductType" Height="34" BorderBrush="#D1D5DB" FontSize="13"
-                                              Background="White" Padding="8,0">
+                                    <ComboBox x:Name="CmbProductType" Style="{StaticResource FormComboStyle}">
                                         <ComboBoxItem Content="Enter Product Type" Foreground="#9CA3AF" IsSelected="True"/>
                                         <ComboBoxItem Content="Inductor"/>
                                         <ComboBoxItem Content="Transformer"/>
@@ -192,8 +202,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Status" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox x:Name="CmbStatus" Height="34" BorderBrush="#D1D5DB" FontSize="13"
-                                              Background="White" Padding="8,0">
+                                    <ComboBox x:Name="CmbStatus" Style="{StaticResource FormComboStyle}">
                                         <ComboBoxItem Content="Enter Status" Foreground="#9CA3AF" IsSelected="True"/>
                                         <ComboBoxItem Content="Draft"/>
                                         <ComboBoxItem Content="In Development"/>

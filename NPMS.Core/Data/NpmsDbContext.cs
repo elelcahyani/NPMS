@@ -119,14 +119,12 @@ namespace NPMS.Core.Data
                 db.SaveChanges();
             }
 
-            var adminUsername = Environment.GetEnvironmentVariable("NPMS_ADMIN_USERNAME");
-            var adminPassword = Environment.GetEnvironmentVariable("NPMS_ADMIN_PASSWORD");
+            var adminUsername = Environment.GetEnvironmentVariable("NPMS_ADMIN_USERNAME") ?? "admin";
+            var adminPassword = Environment.GetEnvironmentVariable("NPMS_ADMIN_PASSWORD") ?? "admin";
 
             var hasActiveSuperAdmin = db.Users.Any(u =>
                 u.RoleId == roleSuperAdmin.RoleId && u.IsActive);
             if (!hasActiveSuperAdmin &&
-                !string.IsNullOrWhiteSpace(adminUsername) &&
-                !string.IsNullOrWhiteSpace(adminPassword) &&
                 !db.Users.Any(u => u.Username == adminUsername))
             {
                 db.Users.Add(new User

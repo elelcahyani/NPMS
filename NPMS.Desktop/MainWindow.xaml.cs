@@ -27,6 +27,7 @@ namespace NPMS.Desktop
             _service = service;
             _currentUser = currentUser;
             ApplyRoleUI();
+            PopulatePartNumberFilter();
             LoadProducts();
             Closed += (s, e) => _searchDebounce?.Dispose();
         }
@@ -53,14 +54,49 @@ namespace NPMS.Desktop
 
         // ─── PRODUCT LIST ─────────────────────────────────────────────────────
 
-        private void LoadProducts(string query = "", string status = "", string factory = "", string partType = "", string family = "")
+        public void PopulatePartNumberFilter()
+        {
+            var currentSelected = (CmbFilterPartType.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var allProducts = _service.SearchProducts(null, null, null);
+            var partNumbers = allProducts
+                .Select(p => p.PartNumber)
+                .Where(pn => !string.IsNullOrWhiteSpace(pn))
+                .Distinct()
+                .OrderBy(pn => pn)
+                .ToList();
+
+            CmbFilterPartType.SelectionChanged -= Filter_SelectionChanged;
+            CmbFilterPartType.Items.Clear();
+            var defaultItem = new ComboBoxItem { Content = "All Part Numbers", IsSelected = true };
+            CmbFilterPartType.Items.Add(defaultItem);
+
+            foreach (var pn in partNumbers)
+            {
+                var item = new ComboBoxItem { Content = pn };
+                if (pn == currentSelected)
+                {
+                    defaultItem.IsSelected = false;
+                    item.IsSelected = true;
+                }
+                CmbFilterPartType.Items.Add(item);
+            }
+            CmbFilterPartType.SelectionChanged += Filter_SelectionChanged;
+        }
+
+        private void LoadProducts(string query = "", string status = "", string factory = "", string partNumber = "", string family = "")
         {
             _products = _service.SearchProducts(query, status, factory);
-            if (!string.IsNullOrWhiteSpace(partType) && partType != "All Part Numbers")
-                _products = _products.Where(p => p.ProductType == partType).ToList();
+            if (!string.IsNullOrWhiteSpace(partNumber) && partNumber != "All Part Numbers")
+                _products = _products.Where(p => p.PartNumber.Equals(partNumber, StringComparison.OrdinalIgnoreCase)).ToList();
             if (!string.IsNullOrWhiteSpace(family) && family != "All Product Families")
                 _products = _products.Where(p => p.ProductFamily == family).ToList();
+            
             GridProducts.ItemsSource = _products;
+            
+            if (EmptyStateMessage != null)
+            {
+                EmptyStateMessage.Visibility = _products.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private void TxtSearch_GotFocus(object sender, RoutedEventArgs e)
@@ -376,6 +412,7 @@ namespace NPMS.Desktop
             var form = new ProductFormWindow(_service, _currentUser.Username) { Owner = this };
             if (form.ShowDialog() == true)
             {
+                PopulatePartNumberFilter();
                 LoadProducts();
                 if (form.SavedProduct != null)
                     ShowProductDetail(form.SavedProduct.ProductId);
@@ -388,6 +425,7 @@ namespace NPMS.Desktop
             var form = new ProductFormWindow(_service, _currentUser.Username, _selectedProduct) { Owner = this };
             if (form.ShowDialog() == true && form.SavedProduct != null)
             {
+                PopulatePartNumberFilter();
                 LoadProducts();
                 ShowProductDetail(form.SavedProduct.ProductId);
             }
@@ -402,6 +440,7 @@ namespace NPMS.Desktop
             if (confirm != MessageBoxResult.Yes) return;
 
             _service.DeleteProduct(_selectedProduct.ProductId);
+            PopulatePartNumberFilter();
             LoadProducts();
             ViewDetail.Visibility = Visibility.Collapsed;
             ViewList.Visibility = Visibility.Visible;

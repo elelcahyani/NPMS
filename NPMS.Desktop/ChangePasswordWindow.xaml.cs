@@ -42,19 +42,26 @@ namespace NPMS.Desktop
                 return;
             }
 
-            var success = _service.ChangePassword(_userId, current, newPwd);
-            if (!success)
+            try
             {
-                ShowError("Password saat ini tidak benar.");
-                TxtCurrentPwd.Clear();
-                TxtCurrentPwd.Focus();
-                return;
-            }
+                var success = _service.ChangePassword(_userId, current, newPwd);
+                if (!success)
+                {
+                    ShowError("Password saat ini tidak benar.");
+                    TxtCurrentPwd.Clear();
+                    TxtCurrentPwd.Focus();
+                    return;
+                }
 
-            MessageBox.Show("Password berhasil diubah.", "Sukses",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            DialogResult = true;
-            Close();
+                MessageBox.Show("Password berhasil diubah.", "Sukses",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                try { DialogResult = true; } catch { }
+                Close();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Gagal mengubah password: {ex.Message}");
+            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)

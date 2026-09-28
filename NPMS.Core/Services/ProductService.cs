@@ -27,6 +27,14 @@ namespace NPMS.Core.Services
         bool DeleteDocument(int documentId);
         ProductMaterialDto AddMaterial(int productId, string partNumber, string partName);
         bool DeleteMaterial(int materialId);
+
+        // Store Material Management
+        List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? location = null, string? uom = null);
+        StoreMaterialDto? GetStoreMaterialById(int id);
+        StoreMaterialDto CreateStoreMaterial(StoreMaterialSaveDto dto, string user);
+        StoreMaterialDto? UpdateStoreMaterial(int id, StoreMaterialSaveDto dto, string user);
+        bool DeleteStoreMaterial(int id);
+        List<ProductMaterialDto> GetAllProductMaterials();
     }
 
     public class ProductService : IProductService
@@ -669,5 +677,147 @@ namespace NPMS.Core.Services
                 PartName = m.PartName
             }).ToList()
         };
-    }
-}
+
+        // ─── STORE MATERIAL MANAGEMENT ────────────────────────────────────────
+
+        public List<ProductMaterialDto> GetAllProductMaterials()
+        {
+            return _db.ProductMaterials
+                .Select(m => new ProductMaterialDto
+                {
+                    MaterialId = m.MaterialId,
+                    ProductId = m.ProductId,
+                    PartNumber = m.PartNumber,
+                    PartName = m.PartName
+                })
+                .Distinct()
+                .OrderBy(m => m.PartNumber)
+                .ToList();
+        }
+
+        public List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? location = null, string? uom = null)
+        {
+            var q = _db.StoreMaterials.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim().ToLower();
+                q = q.Where(m => m.PartNumber.ToLower().Contains(term) ||
+                                 m.ItemDescription.ToLower().Contains(term) ||
+                                 m.ItemCode.ToLower().Contains(term) ||
+                                 m.Lot.ToLower().Contains(term) ||
+                                 m.Location.ToLower().Contains(term) ||
+                                 m.Remarks.ToLower().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(location) && location != "All Locations")
+            {
+                q = q.Where(m => m.Location.ToLower() == location.Trim().ToLower());
+            }
+
+            if (!string.IsNullOrWhiteSpace(uom) && uom != "All UoMs")
+            {
+                q = q.Where(m => m.UoM.ToLower() == uom.Trim().ToLower());
+            }
+
+            return q.OrderByDescending(m => m.EntryDate)
+                .ThenByDescending(m => m.MaterialId)
+                .Select(m => new StoreMaterialDto
+                {
+                    MaterialId = m.MaterialId,
+                    PartNumber = m.PartNumber,
+                    EntryDate = m.EntryDate,
+                    ItemDescription = m.ItemDescription,
+                    ItemCode = m.ItemCode,
+                    UoM = m.UoM,
+                    Lot = m.Lot,
+                    Location = m.Location,
+                    Qty = m.Qty,
+                    Package = m.Package,
+                    Remarks = m.Remarks,
+                    CreatedBy = m.CreatedBy,
+                    CreatedAt = m.CreatedAt,
+                    UpdatedAt = m.UpdatedAt
+                })
+                .ToList();
+        }
+
+        public StoreMaterialDto? GetStoreMaterialById(int id)
+        {
+            var m = _db.StoreMaterials.FirstOrDefault(sm => sm.MaterialId == id);
+            if (m == null) return null;
+            return new StoreMaterialDto
+            {
+                MaterialId = m.MaterialId,
+                PartNumber = m.PartNumber,
+                EntryDate = m.EntryDate,
+                ItemDescription = m.ItemDescription,
+                ItemCode = m.ItemCode,
+                UoM = m.UoM,
+                Lot = m.Lot,
+                Location = m.Location,
+                Qty = m.Qty,
+                Package = m.Package,
+                Remarks = m.Remarks,
+                CreatedBy = m.CreatedBy,
+                CreatedAt = m.CreatedAt,
+                UpdatedAt = m.UpdatedAt
+            };
+        }
+
+        public StoreMaterialDto CreateStoreMaterial(StoreMaterialSaveDto dto, string user)
+        {
+            var entity = new StoreMaterial
+            {
+                PartNumber = dto.PartNumber.Trim(),
+                EntryDate = dto.EntryDate,
+                ItemDescription = dto.ItemDescription.Trim(),
+                ItemCode = dto.ItemCode.Trim(),
+                UoM = string.IsNullOrWhiteSpace(dto.UoM) ? "PCS" : dto.UoM.Trim(),
+                Lot = dto.Lot.Trim(),
+                Location = dto.Location.Trim(),
+                Qty = dto.Qty,
+                Package = dto.Package.Trim(),
+                Remarks = dto.Remarks.Trim(),
+                CreatedBy = user,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _db.StoreMaterials.Add(entity);
+            _db.SaveChanges();
+
+            return GetStoreMaterialById(entity.MaterialId)!;
+        }
+
+        public StoreMaterialDto? UpdateStoreMaterial(int id, StoreMaterialSaveDto dto, string user)
+        {
+            var entity = _db.StoreMaterials.FirstOrDefault(sm => sm.MaterialId == id);
+            if (entity == null) return null;
+
+            entity.PartNumber = dto.PartNumber.Trim();
+            entity.EntryDate = dto.EntryDate;
+            entity.ItemDescription = dto.ItemDescription.Trim();
+            entity.ItemCode = dto.ItemCode.Trim();
+            entity.UoM = string.IsNullOrWhiteSpace(dto.UoM) ? "PCS" : dto.UoM.Trim();
+            entity.Lot = dto.Lot.Trim();
+            entity.Location = dto.Location.Trim();
+            entity.Qty = dto.Qty;
+            entity.Package = dto.Package.Trim();
+            entity.Remarks = dto.Remarks.Trim();
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            _db.SaveChanges();
+            return GetStoreMaterialById(id);
+        }
+
+        public bool DeleteStoreMaterial(int id)
+        {
+            var entity = _db.StoreMaterials.FirstOrDefault(sm => sm.MaterialId == id);
+            if (entity == null) return false;
+            _db.StoreMaterials.Remove(entity);
+            _db.SaveChanges();
+            return true;
+        }
+    }  // end ProductService class
+}  // end namespace

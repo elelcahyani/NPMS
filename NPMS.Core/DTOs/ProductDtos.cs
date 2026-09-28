@@ -154,4 +154,37 @@ namespace NPMS.Core.DTOs
         public List<ProductMaterialDto> Materials { get; set; } = new();
         public List<DocumentDto> Documents { get; set; } = new();
     }
+
+    public class StoreMaterialDto
+    {
+        public int MaterialId { get; set; }
+        public string PartNumber { get; set; } = string.Empty;
+        public DateTime EntryDate { get; set; }
+        public string ItemDescription { get; set; } = string.Empty;
+        public string ItemCode { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public string Lot { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public double Qty { get; set; }
+        public string Package { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class StoreMaterialSaveDto
+    {
+        public int MaterialId { get; set; }
+        public string PartNumber { get; set; } = string.Empty;
+        public DateTime EntryDate { get; set; } = DateTime.Now;
+        public string ItemDescription { get; set; } = string.Empty;
+        public string ItemCode { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public string Lot { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public double Qty { get; set; }
+        public string Package { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+    }
 }

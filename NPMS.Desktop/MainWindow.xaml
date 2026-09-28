@@ -184,7 +184,7 @@
                         <MenuItem Header="Dashboard" Name="BtnNavDashboard" Click="NavDashboard_Click"/>
                         
                         <MenuItem Header="Store" Name="BtnNavStore">
-                            <MenuItem Header="Material" Name="BtnNavStoreMaterial" Style="{StaticResource SubMenuItemStyle}" Click="NavStore_Click"/>
+                            <MenuItem Header="Material" Name="BtnNavStoreMaterial" Style="{StaticResource SubMenuItemStyle}" Click="NavStoreMaterial_Click"/>
                             <MenuItem Header="Tooling" Name="BtnNavStoreTooling" Style="{StaticResource SubMenuItemStyle}" Click="NavStore_Click"/>
                         </MenuItem>
                         
@@ -924,6 +924,308 @@
                             </Border>
                         </Grid>
                     </ScrollViewer>
+                </Grid>
+
+                <!-- MATERIAL INVENTORY VIEW -->
+                <Grid x:Name="ViewMaterial" Visibility="Collapsed" Margin="16,14,16,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Breadcrumb -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Dashboard" Foreground="#666666" FontSize="11"/>
+                        <TextBlock Text=" > " Foreground="#888888" FontSize="11"/>
+                        <TextBlock Text="Store" Foreground="#666666" FontSize="11"/>
+                        <TextBlock Text=" > " Foreground="#888888" FontSize="11"/>
+                        <TextBlock Text="Material Inventory" Foreground="#222222" FontSize="11" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Title Header + Add Button -->
+                    <Grid Grid.Row="1" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Material Inventory" FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
+                            <TextBlock Text="Manage material inventory linked to product part numbers from the Product Dashboard"
+                                       Foreground="#64748B" FontSize="12" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <Border x:Name="BtnAddMaterialBorder" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Background="#6D28D9" CornerRadius="6" Visibility="Visible">
+                            <Button x:Name="BtnAddMaterial" Click="BtnAddMaterial_Click" Padding="14,8"
+                                    Background="Transparent" Foreground="White" FontWeight="Bold"
+                                    FontSize="12" BorderThickness="0" Cursor="Hand">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE710;" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Add Material" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Border>
+                    </Grid>
+
+                    <!-- KPI Stat Cards -->
+                    <Grid Grid.Row="2" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Card 1: Total Items -->
+                        <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL MATERIAL ITEMS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalItems" Text="0" FontSize="20" FontWeight="Bold" Foreground="#1E0734" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Total Qty -->
+                        <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL STOCK QUANTITY" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalQty" Text="0" FontSize="20" FontWeight="Bold" Foreground="#0D9488" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 3: Active Lots -->
+                        <Border Grid.Column="4" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="ACTIVE LOTS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalLots" Text="0" FontSize="20" FontWeight="Bold" Foreground="#6D28D9" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 4: Locations -->
+                        <Border Grid.Column="6" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="STORAGE LOCATIONS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalLocations" Text="0" FontSize="20" FontWeight="Bold" Foreground="#D97706" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Filter & Search Bar -->
+                    <Border Grid.Row="3" Background="White" BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,12">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Material Search Box -->
+                                <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4"
+                                        Background="#F8FAFC" Width="240" Height="30" Margin="0,0,12,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE721;"
+                                                   Foreground="#64748B" FontSize="11"
+                                                   Margin="8,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtSearchMaterialInput" Grid.Column="1"
+                                                 Text="Search Part No, Description, Lot, Location..."
+                                                 Foreground="#64748B" FontSize="11"
+                                                 VerticalContentAlignment="Center" Padding="0,0,8,0"
+                                                 BorderThickness="0" Background="Transparent"
+                                                 GotFocus="TxtSearchMaterial_GotFocus" LostFocus="TxtSearchMaterial_LostFocus"
+                                                 KeyUp="TxtSearchMaterial_KeyUp"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Location Filter -->
+                                <ComboBox x:Name="CmbFilterMaterialLocation" Width="140" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Locations" IsSelected="True"/>
+                                </ComboBox>
+
+                                <!-- UoM Filter -->
+                                <ComboBox x:Name="CmbFilterMaterialUoM" Width="110" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All UoMs" IsSelected="True"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <Button HorizontalAlignment="Right" Click="BtnClearMaterialFilters_Click"
+                                    Content="Clear Filters" Background="Transparent"
+                                    Foreground="#6D28D9" FontWeight="SemiBold" FontSize="12"
+                                    BorderThickness="0" Cursor="Hand" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Material DataGrid Table -->
+                    <Border Grid.Row="4" Background="White" BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="4" SnapsToDevicePixels="True">
+                        <Grid>
+                            <DataGrid x:Name="GridStoreMaterials" AutoGenerateColumns="False"
+                                      IsReadOnly="True" GridLinesVisibility="None"
+                                      HeadersVisibility="Column" RowHeight="32"
+                                      Background="White" BorderThickness="0"
+                                      ColumnHeaderHeight="32" SelectionMode="Single"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      SnapsToDevicePixels="True" UseLayoutRounding="True"
+                                      MouseDoubleClick="GridStoreMaterials_MouseDoubleClick">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#F6F6F6"/>
+                                        <Setter Property="Foreground" Value="#1E0734"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,0,8,0"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="BorderBrush" Value="#EAEAEA"/>
+                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#F3E8FF"/>
+                                                <Setter Property="BorderBrush" Value="#D8B4FE"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FAF5FF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding" Value="8,0,8,0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="Transparent"
+                                                            BorderThickness="0"
+                                                            Padding="{TemplateBinding Padding}"
+                                                            SnapsToDevicePixels="True">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#111827"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+
+                                <DataGrid.Columns>
+                                    <!-- Part Number -->
+                                    <DataGridTemplateColumn Header="Part Number" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding PartNumber}" Foreground="#6D28D9" FontWeight="Bold" FontSize="12"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Tanggal Masuk -->
+                                    <DataGridTemplateColumn Header="Entry Date" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding EntryDate, StringFormat='{}{0:dd MMM yyyy}'}"
+                                                           FontSize="12" Foreground="#475569" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Item Description -->
+                                    <DataGridTextColumn Header="Item Description" Binding="{Binding ItemDescription}" Width="220" FontWeight="SemiBold"/>
+
+                                    <!-- Item Code -->
+                                    <DataGridTextColumn Header="Item Code" Binding="{Binding ItemCode}" Width="105"/>
+
+                                    <!-- UoM -->
+                                    <DataGridTextColumn Header="UoM" Binding="{Binding UoM}" Width="70"/>
+
+                                    <!-- Lot -->
+                                    <DataGridTemplateColumn Header="Lot" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Lot}" FontFamily="Consolas" FontSize="11" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Location -->
+                                    <DataGridTemplateColumn Header="Location" Width="105">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Location}" FontSize="11" FontWeight="SemiBold" Foreground="#334155"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Qty -->
+                                    <DataGridTemplateColumn Header="Qty" Width="85">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Qty, StringFormat='{}{0:N0}'}" FontWeight="Bold" Foreground="#0D9488"
+                                                           HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Package -->
+                                    <DataGridTextColumn Header="Package" Binding="{Binding Package}" Width="100"/>
+
+                                    <!-- Remarks -->
+                                    <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="160"/>
+
+                                    <!-- Actions (Edit / Delete) -->
+                                    <DataGridTemplateColumn Header="Actions" Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Click="BtnEditStoreMaterial_Click" Background="Transparent" BorderThickness="0"
+                                                            Cursor="Hand" ToolTip="Edit Material" Padding="4,2" Margin="0,0,4,0">
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="12" Foreground="#6D28D9"/>
+                                                    </Button>
+                                                    <Button Click="BtnDeleteStoreMaterial_Click" Background="Transparent" BorderThickness="0"
+                                                            Cursor="Hand" ToolTip="Delete Material" Padding="4,2">
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="12" Foreground="#DC2626"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <!-- Empty State Overlay -->
+                            <StackPanel x:Name="MaterialEmptyStateMessage" Visibility="Collapsed" 
+                                        VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,30,0,0">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE721;" 
+                                           FontSize="36" Foreground="#B0B0B0" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                <TextBlock Text="No material records found" FontSize="15" FontWeight="SemiBold" 
+                                           Foreground="#666666" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Try adjusting filters or add a new material record" 
+                                           FontSize="12" Foreground="#999999" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
 
             </Grid>

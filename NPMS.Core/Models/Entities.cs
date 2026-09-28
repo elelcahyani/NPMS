@@ -153,4 +153,23 @@ namespace NPMS.Core.Models
         public string UploadedBy { get; set; } = string.Empty;
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
     }
+
+    public class StoreMaterial
+    {
+        [Key]
+        public int MaterialId { get; set; }
+        public string PartNumber { get; set; } = string.Empty; // Linked to material part numbers in product dashboard
+        public DateTime EntryDate { get; set; } = DateTime.Now; // Tanggal Masuk
+        public string ItemDescription { get; set; } = string.Empty; // Item Description
+        public string ItemCode { get; set; } = string.Empty; // Item Code
+        public string UoM { get; set; } = "PCS"; // UoM
+        public string Lot { get; set; } = string.Empty; // Lot
+        public string Location { get; set; } = string.Empty; // Location
+        public double Qty { get; set; } // Qty
+        public string Package { get; set; } = string.Empty; // Package
+        public string Remarks { get; set; } = string.Empty; // Remarks
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
 }

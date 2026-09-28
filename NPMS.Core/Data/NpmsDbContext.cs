@@ -23,6 +23,7 @@ namespace NPMS.Core.Data
         public DbSet<ProcessStep> Processes => Set<ProcessStep>();
         public DbSet<ProcessParameter> ProcessParameters => Set<ProcessParameter>();
         public DbSet<DocumentMetadata> Documents => Set<DocumentMetadata>();
+        public DbSet<StoreMaterial> StoreMaterials => Set<StoreMaterial>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +40,7 @@ namespace NPMS.Core.Data
             modelBuilder.Entity<ProcessStep>().HasKey(pr => pr.ProcessId);
             modelBuilder.Entity<ProcessParameter>().HasKey(pp => pp.ParameterId);
             modelBuilder.Entity<DocumentMetadata>().HasKey(d => d.DocumentId);
+            modelBuilder.Entity<StoreMaterial>().HasKey(sm => sm.MaterialId);
 
             modelBuilder.Entity<Product>()
                 .HasIndex(p => p.PartNumber)
@@ -84,6 +86,25 @@ namespace NPMS.Core.Data
         public static void SeedDatabase(NpmsDbContext db)
         {
             db.Database.EnsureCreated();
+
+            // Ensure StoreMaterials table exists even when DB was created before this entity was added
+            db.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS StoreMaterials (
+                    MaterialId   INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PartNumber   TEXT NOT NULL,
+                    EntryDate    TEXT NOT NULL,
+                    ItemDescription TEXT NOT NULL DEFAULT '',
+                    ItemCode     TEXT NOT NULL DEFAULT '',
+                    UoM          TEXT NOT NULL DEFAULT 'PCS',
+                    Lot          TEXT NOT NULL DEFAULT '',
+                    Location     TEXT NOT NULL DEFAULT '',
+                    Qty          REAL NOT NULL DEFAULT 0,
+                    Package      TEXT NOT NULL DEFAULT '',
+                    Remarks      TEXT NOT NULL DEFAULT '',
+                    CreatedAt    TEXT NOT NULL,
+                    UpdatedAt    TEXT NOT NULL,
+                    CreatedBy    TEXT NOT NULL DEFAULT ''
+                )");
 
             var initialSeed = !db.Roles.Any();
             var imgDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
@@ -139,6 +160,7 @@ namespace NPMS.Core.Data
 
             if (!initialSeed)
                 return;
+
 
             // Seed Machines & Toolings
             var m1 = new Machine { MachineName = "Automated Winder W-01", MachineCode = "MAC-WIND-01" };
@@ -416,7 +438,180 @@ namespace NPMS.Core.Data
                 new ProcessParameter { ProcessId = proc2.ProcessId, ParameterName = "Dwell Time", ParameterValue = "3.5", Unit = "s" }
             );
 
-            // No seed documents — documents should be uploaded by users
+            // Seed Product Materials for products
+            var mat1 = new ProductMaterial { ProductId = p1.ProductId, PartNumber = "MAT-COP-015", PartName = "Enameled Copper Wire 0.15mm" };
+            var mat2 = new ProductMaterial { ProductId = p1.ProductId, PartNumber = "MAT-FER-EE16", PartName = "Ferrite Core MnZn EE16" };
+            var mat3 = new ProductMaterial { ProductId = p2.ProductId, PartNumber = "MAT-EPO-BLK", PartName = "Epoxy Resin Black Encapsulant" };
+            var mat4 = new ProductMaterial { ProductId = p2.ProductId, PartNumber = "MAT-TIN-SAC305", PartName = "Lead-Free Solder Bar SAC305" };
+            var mat5 = new ProductMaterial { ProductId = p3.ProductId, PartNumber = "MAT-BOB-RM6", PartName = "Bobbin Thermoplastic RM6 6-Pin" };
+
+            db.ProductMaterials.AddRange(mat1, mat2, mat3, mat4, mat5);
+            db.SaveChanges();
+
+            // Seed Store Materials (linked to material part numbers in product dashboard)
+            db.StoreMaterials.AddRange(
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-COP-015",
+                    EntryDate = DateTime.Now.AddDays(-30),
+                    ItemDescription = "Enameled Copper Wire 0.15mm High Purity Class H",
+                    ItemCode = "ITM-CW-015",
+                    UoM = "REEL",
+                    Lot = "LOT-2026-08A",
+                    Location = "WH-A1-04",
+                    Qty = 250,
+                    Package = "Reel 500g",
+                    Remarks = "Approved by QC, passed tension test.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-30),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-30)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-COP-015",
+                    EntryDate = DateTime.Now.AddDays(-10),
+                    ItemDescription = "Enameled Copper Wire 0.15mm High Purity Class H",
+                    ItemCode = "ITM-CW-015",
+                    UoM = "REEL",
+                    Lot = "LOT-2026-09A",
+                    Location = "WH-A1-05",
+                    Qty = 180,
+                    Package = "Reel 500g",
+                    Remarks = "New batch, certificate attached.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-10),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-10)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-FER-EE16",
+                    EntryDate = DateTime.Now.AddDays(-20),
+                    ItemDescription = "Ferrite Core MnZn EE16 High Permeability 2500µ",
+                    ItemCode = "ITM-FC-EE16",
+                    UoM = "PCS",
+                    Lot = "LOT-2026-08B",
+                    Location = "WH-B2-11",
+                    Qty = 5000,
+                    Package = "Box 1000 Pcs",
+                    Remarks = "Supplier: TDK. COA verified.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-20),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-20)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-FER-EE16",
+                    EntryDate = DateTime.Now.AddDays(-7),
+                    ItemDescription = "Ferrite Core MnZn EE16 High Permeability 2500µ",
+                    ItemCode = "ITM-FC-EE16",
+                    UoM = "PCS",
+                    Lot = "LOT-2026-09B",
+                    Location = "WH-B2-12",
+                    Qty = 2000,
+                    Package = "Box 1000 Pcs",
+                    Remarks = "Urgent replenishment order.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-7),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-7)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-EPO-BLK",
+                    EntryDate = DateTime.Now.AddDays(-15),
+                    ItemDescription = "Epoxy Resin Black Encapsulant High Temp 200°C",
+                    ItemCode = "ITM-ER-BLK",
+                    UoM = "KG",
+                    Lot = "LOT-2026-08C",
+                    Location = "WH-C1-02",
+                    Qty = 85,
+                    Package = "Drum 25kg",
+                    Remarks = "Keep refrigerated below 15°C.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-15),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-15)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-EPO-BLK",
+                    EntryDate = DateTime.Now.AddDays(-5),
+                    ItemDescription = "Epoxy Resin Black Encapsulant High Temp 200°C",
+                    ItemCode = "ITM-ER-BLK",
+                    UoM = "KG",
+                    Lot = "LOT-2026-09C",
+                    Location = "WH-C1-03",
+                    Qty = 50,
+                    Package = "Drum 25kg",
+                    Remarks = "Expiry date: March 2027.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-5),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-5)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-TIN-SAC305",
+                    EntryDate = DateTime.Now.AddDays(-12),
+                    ItemDescription = "Lead-Free Solder Bar SAC305 Sn96.5Ag3.0Cu0.5",
+                    ItemCode = "ITM-SB-SAC305",
+                    UoM = "KG",
+                    Lot = "LOT-2026-08D",
+                    Location = "WH-A2-08",
+                    Qty = 200,
+                    Package = "Carton 10kg",
+                    Remarks = "RoHS compliant. Wave solder use.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-12),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-12)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-TIN-SAC305",
+                    EntryDate = DateTime.Now.AddDays(-3),
+                    ItemDescription = "Lead-Free Solder Bar SAC305 Sn96.5Ag3.0Cu0.5",
+                    ItemCode = "ITM-SB-SAC305",
+                    UoM = "KG",
+                    Lot = "LOT-2026-09D",
+                    Location = "WH-A2-09",
+                    Qty = 150,
+                    Package = "Carton 10kg",
+                    Remarks = "RoHS compliant certified batch.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-3),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-3)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-BOB-RM6",
+                    EntryDate = DateTime.Now.AddDays(-8),
+                    ItemDescription = "Bobbin Thermoplastic RM6 6-Pin SMD Horizontal",
+                    ItemCode = "ITM-BB-RM6",
+                    UoM = "PCS",
+                    Lot = "LOT-2026-09E",
+                    Location = "WH-B1-03",
+                    Qty = 3500,
+                    Package = "Tray 500 Pcs",
+                    Remarks = "Incoming inspection passed.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-8),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-8)
+                },
+                new StoreMaterial
+                {
+                    PartNumber = "MAT-BOB-RM6",
+                    EntryDate = DateTime.Now.AddDays(-1),
+                    ItemDescription = "Bobbin Thermoplastic RM6 6-Pin SMD Horizontal",
+                    ItemCode = "ITM-BB-RM6",
+                    UoM = "PCS",
+                    Lot = "LOT-2026-09F",
+                    Location = "WH-B1-04",
+                    Qty = 1200,
+                    Package = "Tray 500 Pcs",
+                    Remarks = "New shipment. Reserved for WO-20260928.",
+                    CreatedBy = "admin",
+                    CreatedAt = DateTime.UtcNow.AddDays(-1),
+                    UpdatedAt = DateTime.UtcNow.AddDays(-1)
+                }
+            );
+
             db.SaveChanges();
         }
     }

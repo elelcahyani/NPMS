@@ -20,6 +20,8 @@ namespace NPMS.Desktop
         private List<ProductListDto> _products = new();
         private ProductDetailDto? _selectedProduct;
         private Timer? _searchDebounce;
+        private List<StoreMaterialDto> _storeMaterials = new();
+        private Timer? _materialSearchDebounce;
 
         public MainWindow(IProductService service, LoginResponse currentUser)
         {
@@ -29,7 +31,11 @@ namespace NPMS.Desktop
             ApplyRoleUI();
             PopulatePartNumberFilter();
             LoadProducts();
-            Closed += (s, e) => _searchDebounce?.Dispose();
+            Closed += (s, e) =>
+            {
+                _searchDebounce?.Dispose();
+                _materialSearchDebounce?.Dispose();
+            };
         }
 
         // ─── ROLE UI ──────────────────────────────────────────────────────────
@@ -41,6 +47,10 @@ namespace NPMS.Desktop
 
             // Add Product button — R&D Team only
             BtnAddProductBorder.Visibility = _currentUser.CanEditProduct
+                ? Visibility.Visible : Visibility.Collapsed;
+
+            // Add Material button — Store Manager & Super Admin
+            BtnAddMaterialBorder.Visibility = _currentUser.CanEditStore
                 ? Visibility.Visible : Visibility.Collapsed;
 
             // Store nav — Super Admin (read) + Store Manager (crud)
@@ -451,14 +461,43 @@ namespace NPMS.Desktop
         private void BtnBackToList_Click(object sender, RoutedEventArgs e)
         {
             ViewDetail.Visibility = Visibility.Collapsed;
+            ViewMaterial.Visibility = Visibility.Collapsed;
             ViewList.Visibility = Visibility.Visible;
         }
 
         private void NavDashboard_Click(object sender, RoutedEventArgs e)
         {
             ViewDetail.Visibility = Visibility.Collapsed;
+            ViewMaterial.Visibility = Visibility.Collapsed;
             ViewList.Visibility = Visibility.Visible;
             LoadProducts();
+        }
+
+        private void NavStoreMaterial_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_currentUser.CanAccessStore)
+            {
+                MessageBox.Show("Anda tidak memiliki akses ke menu Store Material.",
+                    "Akses Ditolak", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ViewList.Visibility = Visibility.Collapsed;
+            ViewDetail.Visibility = Visibility.Collapsed;
+            ViewMaterial.Visibility = Visibility.Visible;
+
+            try
+            {
+                // Load data once — share between filter population and grid
+                var allMaterials = _service.GetStoreMaterials();
+                PopulateMaterialFilters(allMaterials);
+                ApplyStoreMaterialsToGrid(allMaterials);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Gagal memuat data material: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void NavStore_Click(object sender, RoutedEventArgs e)
@@ -469,8 +508,214 @@ namespace NPMS.Desktop
                     "Akses Ditolak", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            MessageBox.Show("Store — Fitur sedang dalam pengembangan.",
-                "Store", MessageBoxButton.OK, MessageBoxImage.Information);
+            NavStoreMaterial_Click(sender, e);
+        }
+
+        // ─── MATERIAL INVENTORY LOGIC ──────────────────────────────────────────
+
+        private void PopulateMaterialFilters(List<StoreMaterialDto> allMaterials)
+        {
+            // Locations
+            var currentLoc = (CmbFilterMaterialLocation.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var locations = allMaterials
+                .Select(m => m.Location)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Distinct()
+                .OrderBy(l => l)
+                .ToList();
+
+            CmbFilterMaterialLocation.SelectionChanged -= MaterialFilter_SelectionChanged;
+            CmbFilterMaterialLocation.Items.Clear();
+            var defaultLoc = new ComboBoxItem { Content = "All Locations", IsSelected = true };
+            CmbFilterMaterialLocation.Items.Add(defaultLoc);
+
+            foreach (var loc in locations)
+            {
+                var item = new ComboBoxItem { Content = loc };
+                if (loc == currentLoc)
+                {
+                    defaultLoc.IsSelected = false;
+                    item.IsSelected = true;
+                }
+                CmbFilterMaterialLocation.Items.Add(item);
+            }
+            CmbFilterMaterialLocation.SelectionChanged += MaterialFilter_SelectionChanged;
+
+            // UoMs
+            var currentUom = (CmbFilterMaterialUoM.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var uoms = allMaterials
+                .Select(m => m.UoM)
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Distinct()
+                .OrderBy(u => u)
+                .ToList();
+
+            CmbFilterMaterialUoM.SelectionChanged -= MaterialFilter_SelectionChanged;
+            CmbFilterMaterialUoM.Items.Clear();
+            var defaultUom = new ComboBoxItem { Content = "All UoMs", IsSelected = true };
+            CmbFilterMaterialUoM.Items.Add(defaultUom);
+
+            foreach (var u in uoms)
+            {
+                var item = new ComboBoxItem { Content = u };
+                if (u == currentUom)
+                {
+                    defaultUom.IsSelected = false;
+                    item.IsSelected = true;
+                }
+                CmbFilterMaterialUoM.Items.Add(item);
+            }
+            CmbFilterMaterialUoM.SelectionChanged += MaterialFilter_SelectionChanged;
+        }
+
+        private void LoadStoreMaterials(string query = "", string location = "", string uom = "")
+        {
+            try
+            {
+                var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
+                if (!string.IsNullOrEmpty(query)) q = query;
+
+                _storeMaterials = _service.GetStoreMaterials(q, location, uom);
+                ApplyStoreMaterialsToGrid(_storeMaterials);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Gagal memuat material: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ApplyStoreMaterialsToGrid(List<StoreMaterialDto> list)
+        {
+            GridStoreMaterials.ItemsSource = list;
+
+            if (MaterialEmptyStateMessage != null)
+                MaterialEmptyStateMessage.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            TxtStatTotalItems.Text = list.Count.ToString("N0");
+            TxtStatTotalQty.Text = list.Sum(m => m.Qty).ToString("N0");
+            TxtStatTotalLots.Text = list.Select(m => m.Lot).Where(l => !string.IsNullOrWhiteSpace(l)).Distinct().Count().ToString("N0");
+            TxtStatTotalLocations.Text = list.Select(m => m.Location).Where(l => !string.IsNullOrWhiteSpace(l)).Distinct().Count().ToString("N0");
+        }
+
+        private void MaterialFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var loc = GetComboVal(CmbFilterMaterialLocation);
+            var uom = GetComboVal(CmbFilterMaterialUoM);
+            var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
+            LoadStoreMaterials(q, loc, uom);
+        }
+
+        private void BtnClearMaterialFilters_Click(object sender, RoutedEventArgs e)
+        {
+            TxtSearchMaterialInput.Text = "Cari Part No, Description, Lot, Location...";
+            TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139));
+            CmbFilterMaterialLocation.SelectedIndex = 0;
+            CmbFilterMaterialUoM.SelectedIndex = 0;
+            LoadStoreMaterials();
+        }
+
+        private void TxtSearchMaterial_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location...")
+            {
+                TxtSearchMaterialInput.Text = "";
+                TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(30, 7, 52));
+            }
+        }
+
+        private void TxtSearchMaterial_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TxtSearchMaterialInput.Text))
+            {
+                TxtSearchMaterialInput.Text = "Cari Part No, Description, Lot, Location...";
+                TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139));
+            }
+        }
+
+        private void TxtSearchMaterial_KeyUp(object sender, KeyEventArgs e)
+        {
+            _materialSearchDebounce?.Dispose();
+            _materialSearchDebounce = new Timer(_ =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
+                    var loc = GetComboVal(CmbFilterMaterialLocation);
+                    var uom = GetComboVal(CmbFilterMaterialUoM);
+                    LoadStoreMaterials(q, loc, uom);
+                });
+            }, null, 300, Timeout.Infinite);
+        }
+
+        private void BtnAddMaterial_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new StoreMaterialFormDialog(_service, _currentUser.Username) { Owner = this };
+            if (dlg.ShowDialog() == true)
+            {
+                RefreshStoreMaterialView();
+            }
+        }
+
+        private void BtnEditStoreMaterial_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.DataContext is not StoreMaterialDto item) return;
+
+            var dlg = new StoreMaterialFormDialog(_service, _currentUser.Username, item) { Owner = this };
+            if (dlg.ShowDialog() == true)
+            {
+                RefreshStoreMaterialView();
+            }
+        }
+
+        private void GridStoreMaterials_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (GridStoreMaterials.SelectedItem is not StoreMaterialDto item) return;
+
+            var originalSource = e.OriginalSource as DependencyObject;
+            while (originalSource != null)
+            {
+                if (originalSource is DataGridRow) break;
+                if (originalSource is System.Windows.Controls.Primitives.DataGridColumnHeader) return;
+                originalSource = VisualTreeHelper.GetParent(originalSource);
+            }
+            if (originalSource == null) return;
+
+            var dlg = new StoreMaterialFormDialog(_service, _currentUser.Username, item) { Owner = this };
+            if (dlg.ShowDialog() == true)
+            {
+                RefreshStoreMaterialView();
+            }
+        }
+
+        private void BtnDeleteStoreMaterial_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.DataContext is not StoreMaterialDto item) return;
+
+            var confirm = MessageBox.Show(
+                $"Hapus material '{item.PartNumber}' - {item.ItemDescription} (Lot: {item.Lot})?\n\nTindakan ini tidak dapat dibatalkan.",
+                "Hapus Material Inventory", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            _service.DeleteStoreMaterial(item.MaterialId);
+            RefreshStoreMaterialView();
+        }
+
+        private void RefreshStoreMaterialView()
+        {
+            try
+            {
+                var allMaterials = _service.GetStoreMaterials();
+                PopulateMaterialFilters(allMaterials);
+                ApplyStoreMaterialsToGrid(allMaterials);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Gagal refresh data: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void NavSettings_Click(object sender, RoutedEventArgs e)

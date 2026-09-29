@@ -1036,16 +1036,16 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Location Filter -->
-                                <ComboBox x:Name="CmbFilterMaterialLocation" Width="140" Height="30" Margin="0,0,10,0"
+                                <!-- Part Number Filter -->
+                                <ComboBox x:Name="CmbFilterMaterialPartNumber" Width="140" Height="30" Margin="0,0,10,0"
                                           FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
-                                    <ComboBoxItem Content="All Locations" IsSelected="True"/>
+                                    <ComboBoxItem Content="All Part Numbers" IsSelected="True"/>
                                 </ComboBox>
 
-                                <!-- UoM Filter -->
-                                <ComboBox x:Name="CmbFilterMaterialUoM" Width="110" Height="30" Margin="0,0,10,0"
+                                <!-- Lot Filter -->
+                                <ComboBox x:Name="CmbFilterMaterialLot" Width="110" Height="30" Margin="0,0,10,0"
                                           FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
-                                    <ComboBoxItem Content="All UoMs" IsSelected="True"/>
+                                    <ComboBoxItem Content="All Lots" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
 

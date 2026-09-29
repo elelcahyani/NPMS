@@ -29,7 +29,7 @@ namespace NPMS.Core.Services
         bool DeleteMaterial(int materialId);
 
         // Store Material Management
-        List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? location = null, string? uom = null);
+        List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? partNumber = null, string? lot = null);
         StoreMaterialDto? GetStoreMaterialById(int id);
         StoreMaterialDto CreateStoreMaterial(StoreMaterialSaveDto dto, string user);
         StoreMaterialDto? UpdateStoreMaterial(int id, StoreMaterialSaveDto dto, string user);
@@ -695,7 +695,7 @@ namespace NPMS.Core.Services
                 .ToList();
         }
 
-        public List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? location = null, string? uom = null)
+        public List<StoreMaterialDto> GetStoreMaterials(string? query = null, string? partNumber = null, string? lot = null)
         {
             var q = _db.StoreMaterials.AsQueryable();
 
@@ -710,14 +710,14 @@ namespace NPMS.Core.Services
                                  m.Remarks.ToLower().Contains(term));
             }
 
-            if (!string.IsNullOrWhiteSpace(location) && location != "All Locations")
+            if (!string.IsNullOrWhiteSpace(partNumber) && partNumber != "All Part Numbers")
             {
-                q = q.Where(m => m.Location.ToLower() == location.Trim().ToLower());
+                q = q.Where(m => m.PartNumber.ToLower() == partNumber.Trim().ToLower());
             }
 
-            if (!string.IsNullOrWhiteSpace(uom) && uom != "All UoMs")
+            if (!string.IsNullOrWhiteSpace(lot) && lot != "All Lots")
             {
-                q = q.Where(m => m.UoM.ToLower() == uom.Trim().ToLower());
+                q = q.Where(m => m.Lot.ToLower() == lot.Trim().ToLower());
             }
 
             return q.OrderByDescending(m => m.EntryDate)

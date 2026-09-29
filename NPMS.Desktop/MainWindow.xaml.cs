@@ -515,67 +515,67 @@ namespace NPMS.Desktop
 
         private void PopulateMaterialFilters(List<StoreMaterialDto> allMaterials)
         {
-            // Locations
-            var currentLoc = (CmbFilterMaterialLocation.SelectedItem as ComboBoxItem)?.Content?.ToString();
-            var locations = allMaterials
-                .Select(m => m.Location)
-                .Where(l => !string.IsNullOrWhiteSpace(l))
+            // Part numbers
+            var currentPartNumber = (CmbFilterMaterialPartNumber.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var partNumbers = allMaterials
+                .Select(m => m.PartNumber)
+                .Where(partNumber => !string.IsNullOrWhiteSpace(partNumber))
                 .Distinct()
-                .OrderBy(l => l)
+                .OrderBy(partNumber => partNumber)
                 .ToList();
 
-            CmbFilterMaterialLocation.SelectionChanged -= MaterialFilter_SelectionChanged;
-            CmbFilterMaterialLocation.Items.Clear();
-            var defaultLoc = new ComboBoxItem { Content = "All Locations", IsSelected = true };
-            CmbFilterMaterialLocation.Items.Add(defaultLoc);
+            CmbFilterMaterialPartNumber.SelectionChanged -= MaterialFilter_SelectionChanged;
+            CmbFilterMaterialPartNumber.Items.Clear();
+            var defaultPartNumber = new ComboBoxItem { Content = "All Part Numbers", IsSelected = true };
+            CmbFilterMaterialPartNumber.Items.Add(defaultPartNumber);
 
-            foreach (var loc in locations)
+            foreach (var partNumber in partNumbers)
             {
-                var item = new ComboBoxItem { Content = loc };
-                if (loc == currentLoc)
+                var item = new ComboBoxItem { Content = partNumber };
+                if (partNumber == currentPartNumber)
                 {
-                    defaultLoc.IsSelected = false;
+                    defaultPartNumber.IsSelected = false;
                     item.IsSelected = true;
                 }
-                CmbFilterMaterialLocation.Items.Add(item);
+                CmbFilterMaterialPartNumber.Items.Add(item);
             }
-            CmbFilterMaterialLocation.SelectionChanged += MaterialFilter_SelectionChanged;
+            CmbFilterMaterialPartNumber.SelectionChanged += MaterialFilter_SelectionChanged;
 
-            // UoMs
-            var currentUom = (CmbFilterMaterialUoM.SelectedItem as ComboBoxItem)?.Content?.ToString();
-            var uoms = allMaterials
-                .Select(m => m.UoM)
-                .Where(u => !string.IsNullOrWhiteSpace(u))
+            // Lots
+            var currentLot = (CmbFilterMaterialLot.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var lots = allMaterials
+                .Select(m => m.Lot)
+                .Where(lot => !string.IsNullOrWhiteSpace(lot))
                 .Distinct()
-                .OrderBy(u => u)
+                .OrderBy(lot => lot)
                 .ToList();
 
-            CmbFilterMaterialUoM.SelectionChanged -= MaterialFilter_SelectionChanged;
-            CmbFilterMaterialUoM.Items.Clear();
-            var defaultUom = new ComboBoxItem { Content = "All UoMs", IsSelected = true };
-            CmbFilterMaterialUoM.Items.Add(defaultUom);
+            CmbFilterMaterialLot.SelectionChanged -= MaterialFilter_SelectionChanged;
+            CmbFilterMaterialLot.Items.Clear();
+            var defaultLot = new ComboBoxItem { Content = "All Lots", IsSelected = true };
+            CmbFilterMaterialLot.Items.Add(defaultLot);
 
-            foreach (var u in uoms)
+            foreach (var lot in lots)
             {
-                var item = new ComboBoxItem { Content = u };
-                if (u == currentUom)
+                var item = new ComboBoxItem { Content = lot };
+                if (lot == currentLot)
                 {
-                    defaultUom.IsSelected = false;
+                    defaultLot.IsSelected = false;
                     item.IsSelected = true;
                 }
-                CmbFilterMaterialUoM.Items.Add(item);
+                CmbFilterMaterialLot.Items.Add(item);
             }
-            CmbFilterMaterialUoM.SelectionChanged += MaterialFilter_SelectionChanged;
+            CmbFilterMaterialLot.SelectionChanged += MaterialFilter_SelectionChanged;
         }
 
-        private void LoadStoreMaterials(string query = "", string location = "", string uom = "")
+        private void LoadStoreMaterials(string query = "", string partNumber = "", string lot = "")
         {
             try
             {
                 var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
                 if (!string.IsNullOrEmpty(query)) q = query;
 
-                _storeMaterials = _service.GetStoreMaterials(q, location, uom);
+                _storeMaterials = _service.GetStoreMaterials(q, partNumber, lot);
                 ApplyStoreMaterialsToGrid(_storeMaterials);
             }
             catch (Exception ex)
@@ -601,18 +601,18 @@ namespace NPMS.Desktop
         private void MaterialFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!IsLoaded) return;
-            var loc = GetComboVal(CmbFilterMaterialLocation);
-            var uom = GetComboVal(CmbFilterMaterialUoM);
+            var partNumber = GetComboVal(CmbFilterMaterialPartNumber);
+            var lot = GetComboVal(CmbFilterMaterialLot);
             var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
-            LoadStoreMaterials(q, loc, uom);
+            LoadStoreMaterials(q, partNumber, lot);
         }
 
         private void BtnClearMaterialFilters_Click(object sender, RoutedEventArgs e)
         {
             TxtSearchMaterialInput.Text = "Cari Part No, Description, Lot, Location...";
             TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139));
-            CmbFilterMaterialLocation.SelectedIndex = 0;
-            CmbFilterMaterialUoM.SelectedIndex = 0;
+            CmbFilterMaterialPartNumber.SelectedIndex = 0;
+            CmbFilterMaterialLot.SelectedIndex = 0;
             LoadStoreMaterials();
         }
 
@@ -642,9 +642,9 @@ namespace NPMS.Desktop
                 Dispatcher.Invoke(() =>
                 {
                     var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
-                    var loc = GetComboVal(CmbFilterMaterialLocation);
-                    var uom = GetComboVal(CmbFilterMaterialUoM);
-                    LoadStoreMaterials(q, loc, uom);
+                    var partNumber = GetComboVal(CmbFilterMaterialPartNumber);
+                    var lot = GetComboVal(CmbFilterMaterialLot);
+                    LoadStoreMaterials(q, partNumber, lot);
                 });
             }, null, 300, Timeout.Infinite);
         }

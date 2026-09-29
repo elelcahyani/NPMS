@@ -115,46 +115,40 @@ namespace NPMS.Core.Data
             var roleStoreManager = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.StoreManager);
             var roleViewer = db.Roles.FirstOrDefault(r => r.RoleName == UserRole.Viewer);
 
-            if (roleSuperAdmin == null || roleRdTeam == null || roleStoreManager == null || roleViewer == null)
-            {
-                roleSuperAdmin ??= new Role { RoleName = UserRole.SuperAdmin };
-                roleRdTeam ??= new Role { RoleName = UserRole.RdTeam };
-                roleStoreManager ??= new Role { RoleName = UserRole.StoreManager };
-                roleViewer ??= new Role { RoleName = UserRole.Viewer };
-                db.Roles.AddRange(
-                    roleSuperAdmin,
-                    roleRdTeam,
-                    roleStoreManager,
-                    roleViewer);
-                db.SaveChanges();
-            }
+            if (roleSuperAdmin == null) { roleSuperAdmin = new Role { RoleName = UserRole.SuperAdmin }; db.Roles.Add(roleSuperAdmin); }
+            if (roleRdTeam == null) { roleRdTeam = new Role { RoleName = UserRole.RdTeam }; db.Roles.Add(roleRdTeam); }
+            if (roleStoreManager == null) { roleStoreManager = new Role { RoleName = UserRole.StoreManager }; db.Roles.Add(roleStoreManager); }
+            if (roleViewer == null) { roleViewer = new Role { RoleName = UserRole.Viewer }; db.Roles.Add(roleViewer); }
+            db.SaveChanges();
 
             // ─── USERS ────────────────────────────────────────────────────────
-            // Disable legacy SHA-256 seeded accounts during upgrade. New administrators must be
-            // explicitly configured through environment variables.
+            // Re-hash legacy SHA-256 accounts to PBKDF2 using default passwords.
+            var legacyPasswords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "superadmin",    "Admin@1234"  },
+                { "rd_user",       "Rdteam@1234" },
+                { "store_manager", "Store@1234"  },
+                { "viewer",        "Viewer@1234" }
+            };
+
             var legacyUsers = db.Users.Where(u => !u.PasswordHash.Contains(":")).ToList();
-            if (legacyUsers.Count > 0)
+            foreach (var user in legacyUsers)
             {
-                foreach (var user in legacyUsers)
-                    user.IsActive = false;
-                db.SaveChanges();
+                if (legacyPasswords.TryGetValue(user.Username, out var pwd))
+                    user.PasswordHash = ProductService.HashPassword(pwd);
+                user.IsActive = true;
             }
+            if (legacyUsers.Count > 0)
+                db.SaveChanges();
 
-            var adminUsername = Environment.GetEnvironmentVariable("NPMS_ADMIN_USERNAME") ?? "admin";
-            var adminPassword = Environment.GetEnvironmentVariable("NPMS_ADMIN_PASSWORD") ?? "admin";
-
-            var hasActiveSuperAdmin = db.Users.Any(u =>
-                u.RoleId == roleSuperAdmin.RoleId && u.IsActive);
-            if (!hasActiveSuperAdmin &&
-                !db.Users.Any(u => u.Username == adminUsername))
+            if (!db.Users.Any())
             {
-                db.Users.Add(new User
-                {
-                    Username = adminUsername,
-                    PasswordHash = ProductService.HashPassword(adminPassword),
-                    RoleId = roleSuperAdmin.RoleId,
-                    IsActive = true
-                });
+                db.Users.AddRange(
+                    new User { Username = "superadmin",    PasswordHash = ProductService.HashPassword("Admin@1234"),   RoleId = roleSuperAdmin!.RoleId,   IsActive = true },
+                    new User { Username = "rd_user",       PasswordHash = ProductService.HashPassword("Rdteam@1234"),  RoleId = roleRdTeam!.RoleId,       IsActive = true },
+                    new User { Username = "store_manager", PasswordHash = ProductService.HashPassword("Store@1234"),   RoleId = roleStoreManager!.RoleId, IsActive = true },
+                    new User { Username = "viewer",        PasswordHash = ProductService.HashPassword("Viewer@1234"),  RoleId = roleViewer!.RoleId,       IsActive = true }
+                );
                 db.SaveChanges();
             }
 

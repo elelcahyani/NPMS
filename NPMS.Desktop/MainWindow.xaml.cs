@@ -462,6 +462,7 @@ namespace NPMS.Desktop
         {
             ViewDetail.Visibility = Visibility.Collapsed;
             ViewMaterial.Visibility = Visibility.Collapsed;
+            ViewTooling.Visibility = Visibility.Collapsed;
             ViewList.Visibility = Visibility.Visible;
         }
 
@@ -469,6 +470,7 @@ namespace NPMS.Desktop
         {
             ViewDetail.Visibility = Visibility.Collapsed;
             ViewMaterial.Visibility = Visibility.Collapsed;
+            ViewTooling.Visibility = Visibility.Collapsed;
             ViewList.Visibility = Visibility.Visible;
             LoadProducts();
         }
@@ -484,6 +486,7 @@ namespace NPMS.Desktop
 
             ViewList.Visibility = Visibility.Collapsed;
             ViewDetail.Visibility = Visibility.Collapsed;
+            ViewTooling.Visibility = Visibility.Collapsed;
             ViewMaterial.Visibility = Visibility.Visible;
 
             try
@@ -509,6 +512,21 @@ namespace NPMS.Desktop
                 return;
             }
             NavStoreMaterial_Click(sender, e);
+        }
+
+        private void NavStoreTooling_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_currentUser.CanAccessStore)
+            {
+                MessageBox.Show("Anda tidak memiliki akses ke menu Store Tooling.",
+                    "Akses Ditolak", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ViewList.Visibility = Visibility.Collapsed;
+            ViewDetail.Visibility = Visibility.Collapsed;
+            ViewMaterial.Visibility = Visibility.Collapsed;
+            ViewTooling.Visibility = Visibility.Visible;
         }
 
         // ─── MATERIAL INVENTORY LOGIC ──────────────────────────────────────────
@@ -603,36 +621,18 @@ namespace NPMS.Desktop
             if (!IsLoaded) return;
             var partNumber = GetComboVal(CmbFilterMaterialPartNumber);
             var lot = GetComboVal(CmbFilterMaterialLot);
-            var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
+            var q = TxtSearchMaterialInput.Text;
             LoadStoreMaterials(q, partNumber, lot);
         }
 
         private void BtnClearMaterialFilters_Click(object sender, RoutedEventArgs e)
         {
-            TxtSearchMaterialInput.Text = "Cari Part No, Description, Lot, Location...";
-            TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139));
+            TxtSearchMaterialInput.Text = "";
             CmbFilterMaterialPartNumber.SelectedIndex = 0;
             CmbFilterMaterialLot.SelectedIndex = 0;
             LoadStoreMaterials();
         }
 
-        private void TxtSearchMaterial_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location...")
-            {
-                TxtSearchMaterialInput.Text = "";
-                TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(30, 7, 52));
-            }
-        }
-
-        private void TxtSearchMaterial_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(TxtSearchMaterialInput.Text))
-            {
-                TxtSearchMaterialInput.Text = "Cari Part No, Description, Lot, Location...";
-                TxtSearchMaterialInput.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139));
-            }
-        }
 
         private void TxtSearchMaterial_KeyUp(object sender, KeyEventArgs e)
         {
@@ -641,7 +641,7 @@ namespace NPMS.Desktop
             {
                 Dispatcher.Invoke(() =>
                 {
-                    var q = TxtSearchMaterialInput.Text == "Cari Part No, Description, Lot, Location..." ? "" : TxtSearchMaterialInput.Text;
+                    var q = TxtSearchMaterialInput.Text;
                     var partNumber = GetComboVal(CmbFilterMaterialPartNumber);
                     var lot = GetComboVal(CmbFilterMaterialLot);
                     LoadStoreMaterials(q, partNumber, lot);

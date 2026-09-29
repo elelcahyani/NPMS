@@ -185,7 +185,7 @@
                         
                         <MenuItem Header="Store" Name="BtnNavStore">
                             <MenuItem Header="Material" Name="BtnNavStoreMaterial" Style="{StaticResource SubMenuItemStyle}" Click="NavStoreMaterial_Click"/>
-                            <MenuItem Header="Tooling" Name="BtnNavStoreTooling" Style="{StaticResource SubMenuItemStyle}" Click="NavStore_Click"/>
+                            <MenuItem Header="Tooling" Name="BtnNavStoreTooling" Style="{StaticResource SubMenuItemStyle}" Click="NavStoreTooling_Click"/>
                         </MenuItem>
                         
                         <MenuItem Header="Settings" Name="BtnNavSettings">
@@ -391,9 +391,9 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="180" FontWeight="SemiBold"/>
-                                    <DataGridTextColumn Header="Product Family" Binding="{Binding ProductFamily}" Width="160"/>
-                                    <DataGridTextColumn Header="Product Group" Binding="{Binding ProductGroup}" Width="150"/>
+                                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="4*" MinWidth="160" FontWeight="SemiBold"/>
+                                    <DataGridTextColumn Header="Product Family" Binding="{Binding ProductFamily}" Width="3*" MinWidth="140"/>
+                                    <DataGridTextColumn Header="Product Group" Binding="{Binding ProductGroup}" Width="3*" MinWidth="130"/>
                                     <DataGridTextColumn Header="Product Type" Binding="{Binding ProductType}" Width="105"/>
                                     <DataGridTemplateColumn Header="Status" Width="95">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -457,473 +457,482 @@
                 </Grid>
 
                 <!-- DETAIL VIEW -->
-                <Grid x:Name="ViewDetail" Visibility="Collapsed" Margin="28,20,28,24">
+                <Grid x:Name="ViewDetail" Visibility="Collapsed" Margin="16,12,16,12">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Breadcrumb + Back -->
-                    <StackPanel Grid.Row="0" Margin="0,0,0,14">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text="Dashboard" Foreground="#6B7280" FontSize="12"/>
-                            <TextBlock Text=" > " Foreground="#6B7280" FontSize="12"/>
-                            <TextBlock Text="Search Results" Foreground="#6B7280" FontSize="12"/>
-                            <TextBlock Text=" > " Foreground="#6B7280" FontSize="12"/>
-                            <TextBlock x:Name="BreadcrumbProduct" Foreground="#374151" FontSize="12" FontWeight="SemiBold"/>
-                        </StackPanel>
-                        <Button x:Name="BtnBackToList" Click="BtnBackToList_Click"
-                                Content="&lt;- Back to Search Results"
-                                Background="Transparent" BorderThickness="0"
-                                Foreground="#6D28D9" FontSize="12" FontWeight="SemiBold"
-                                HorizontalAlignment="Left" Cursor="Hand" Padding="0"/>
+                    <!-- Breadcrumb -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Dashboard" Foreground="#666666" FontSize="11" Cursor="Hand">
+                            <TextBlock.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{x:Null}"/>
+                            </TextBlock.InputBindings>
+                        </TextBlock>
+                        <TextBlock Text=" > " Foreground="#888888" FontSize="11"/>
+                        <TextBlock Text="Product Database" Foreground="#666666" FontSize="11" Cursor="Hand" MouseDown="BtnBackToList_Click"/>
+                        <TextBlock Text=" > " Foreground="#888888" FontSize="11"/>
+                        <TextBlock x:Name="BreadcrumbProduct" Text="" Foreground="#222222" FontSize="11" FontWeight="SemiBold"/>
                     </StackPanel>
 
-                    <!-- Detail Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="220"/>
-                            </Grid.ColumnDefinitions>
+                    <!-- Title Bar + Action Buttons -->
+                    <Grid Grid.Row="1" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock x:Name="DetailTitle" Text="" FontSize="18" FontWeight="Bold" Foreground="#1F1F1F"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <!-- Read-only badge for non-R&D -->
+                            <Border x:Name="BadgeAccess" Background="#F3E8FF" BorderBrush="#C4B5FD" BorderThickness="1"
+                                    CornerRadius="4" Padding="10,4" Margin="0,0,8,0" Visibility="Collapsed" VerticalAlignment="Center">
+                                <TextBlock Text="🔒 Read Only" FontSize="11" Foreground="#6D28D9" FontWeight="SemiBold"/>
+                            </Border>
+                            <!-- Upload Doc -->
+                            <Border x:Name="BtnUploadDocBorder" Background="#0D9488" CornerRadius="4" Margin="0,0,8,0" Visibility="Collapsed">
+                                <Button x:Name="BtnUploadDoc" Click="BtnUploadDoc_Click" Padding="12,6"
+                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
+                                        FontSize="12" BorderThickness="0" Cursor="Hand">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE898;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Upload Doc" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Border>
+                            <!-- Edit -->
+                            <Border x:Name="BtnEditProductBorder" Background="#6D28D9" CornerRadius="4" Margin="0,0,8,0" Visibility="Collapsed">
+                                <Button x:Name="BtnEditProduct" Click="BtnEditProduct_Click" Padding="12,6"
+                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
+                                        FontSize="12" BorderThickness="0" Cursor="Hand">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Edit Product" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Border>
+                            <!-- Delete -->
+                            <Border x:Name="BtnDeleteProductBorder" Background="#DC2626" CornerRadius="4" Visibility="Collapsed">
+                                <Button x:Name="BtnDeleteProduct" Click="BtnDeleteProduct_Click" Padding="12,6"
+                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
+                                        FontSize="12" BorderThickness="0" Cursor="Hand">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Border>
+                            <!-- Back -->
+                            <Button Click="BtnBackToList_Click" Padding="12,6" Margin="8,0,0,0"
+                                    Background="Transparent" Foreground="#6B7280" FontSize="12"
+                                    BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72B;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Back" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
 
-                            <!-- Left Column -->
-                            <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <!-- Detail Body: Two column layout -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="320"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                                <!-- Header Card -->
-                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
-                                        CornerRadius="8" Padding="20" Margin="0,0,0,16">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid Grid.Row="0" Margin="0,0,0,16">
-                                            <TextBlock x:Name="DetailTitle" FontSize="20" FontWeight="Bold"
-                                                       Foreground="#111827" VerticalAlignment="Center"/>
-                                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                                <Border x:Name="BtnDeleteProductBorder" Background="White"
-                                                        BorderBrush="#FCA5A5" BorderThickness="1"
-                                                        CornerRadius="6" Visibility="Collapsed" Margin="0,0,8,0">
-                                                    <Button x:Name="BtnDeleteProduct" Click="BtnDeleteProduct_Click"
-                                                            Height="32" Width="32"
-                                                            Background="Transparent" Foreground="#DC2626"
-                                                            BorderThickness="0" Cursor="Hand" ToolTip="Delete Product">
-                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="14"/>
-                                                    </Button>
-                                                </Border>
-                                                <Border x:Name="BtnEditProductBorder" Background="White"
-                                                        BorderBrush="#D1D5DB" BorderThickness="1"
-                                                        CornerRadius="6" Visibility="Collapsed">
-                                                    <Button x:Name="BtnEditProduct" Click="BtnEditProduct_Click"
-                                                            Height="32" Padding="12,0"
-                                                            Background="Transparent" Foreground="#374151"
-                                                            FontSize="12" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;"
-                                                                       FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="Edit Product" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </Border>
-                                                <Border x:Name="BadgeAccess" Background="#F1F5F9" BorderBrush="#CBD5E1"
-                                                        BorderThickness="1" CornerRadius="12" Padding="10,4"
-                                                        Visibility="Collapsed">
-                                                    <TextBlock Text="Read-only Access" Foreground="#64748B"
-                                                               FontSize="11" FontWeight="SemiBold"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                        <Grid Grid.Row="1">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="120"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="100" Height="90" CornerRadius="6"
-                                                    Background="#F3F4F6" BorderBrush="#E5E7EB"
-                                                    BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Top">
-                                                <Grid>
-                                                    <TextBlock x:Name="TxtNoImage" Text="No Image" FontSize="11" Foreground="#9CA3AF"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               TextAlignment="Center"/>
-                                                    <Image x:Name="ImgProduct" Stretch="Uniform"
-                                                           Visibility="Collapsed"/>
-                                                </Grid>
-                                            </Border>
-                                            <Grid Grid.Column="1">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-                                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
-                                                    <TextBlock Text="PART NUMBER" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailPn" FontSize="13" FontWeight="Bold" Foreground="#2563EB"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                                    <TextBlock Text="PRODUCT NAME" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailName" FontSize="13" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,10">
-                                                    <TextBlock Text="PRODUCT FAMILY" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailFamily" FontSize="13"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
-                                                    <TextBlock Text="PRODUCT GROUP" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailGroup" FontSize="13"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
-                                                    <TextBlock Text="PRODUCT TYPE" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailType" FontSize="13"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10">
-                                                    <TextBlock Text="STATUS" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailStatus" FontSize="13" FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,0,0,10">
-                                                    <TextBlock Text="CURRENT PRODUCT REVISION" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailRevision" FontSize="13"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="0,0,0,10">
-                                                    <TextBlock Text="DESCRIPTION" FontSize="9" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2"/>
-                                                    <TextBlock x:Name="TxtDetailDesc" FontSize="12" TextWrapping="Wrap" Foreground="#374151"/>
-                                                </StackPanel>
-                                                <Grid Grid.Row="5" Grid.ColumnSpan="2" Margin="0,6,0,0">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="CREATED BY" FontSize="9" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,2"/>
-                                                        <TextBlock x:Name="TxtDetailCreatedBy" FontSize="11" Foreground="#6B7280"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1">
-                                                        <TextBlock Text="LAST MODIFIED" FontSize="9" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,2"/>
-                                                        <TextBlock x:Name="TxtDetailUpdatedAt" FontSize="11" Foreground="#6B7280"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Grid>
-                                        </Grid>
-                                    </Grid>
-                                </Border>
+                        <!-- LEFT PANEL: Image + Core Info + Manufacturing + Spec -->
+                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
 
-                                <!-- Manufacturing Info -->
-                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
-                                        CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <!-- Product Image Card -->
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <TextBlock Text="Manufacturing Information" FontSize="14"
-                                                   FontWeight="SemiBold" Foreground="#111827" Margin="0,0,0,14"/>
-                                        <Grid Margin="0,0,0,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="16"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Factory" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                    <TextBlock x:Name="TxtDetailFactory" FontSize="13"/>
-                                                </Border>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Production Line" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                    <TextBlock x:Name="TxtDetailLine" FontSize="13"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                        <StackPanel Margin="0,0,0,10">
-                                            <TextBlock Text="Production Type" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                            <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB" Width="220" HorizontalAlignment="Left">
-                                                <TextBlock x:Name="TxtDetailProdType" FontSize="13"/>
-                                            </Border>
-                                        </StackPanel>
-                                        <StackPanel>
-                                            <TextBlock Text="Manufacturing Notes" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                            <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                <TextBlock x:Name="TxtDetailMfgNotes" FontSize="12" TextWrapping="Wrap" Foreground="#374151"/>
-                                            </Border>
-                                        </StackPanel>
+                                        <TextBlock Text="PRODUCT IMAGE" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,10"/>
+                                        <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6"
+                                                Background="#F9FAFB" Height="160" ClipToBounds="True">
+                                            <Grid>
+                                                <Image x:Name="ImgProduct" Stretch="UniformToFill"
+                                                       Visibility="Collapsed"/>
+                                                <StackPanel x:Name="TxtNoImage" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEB9F;"
+                                                               FontSize="36" Foreground="#D1D5DB" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="No image" FontSize="11" Foreground="#9CA3AF"
+                                                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Process Flow -->
-                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
-                                        CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <!-- Core Info Card -->
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <TextBlock Text="Process Flow" FontSize="14"
-                                                   FontWeight="SemiBold" Foreground="#111827" Margin="0,0,0,12"/>
-                                        <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
-                                            <WrapPanel x:Name="DetailProcessTabBar" Orientation="Horizontal"/>
-                                        </Border>
-                                        <Border x:Name="DetailProcessPanel" Margin="0,12,0,0"
-                                                BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="16"
-                                                Visibility="Collapsed">
-                                            <StackPanel>
-                                                <TextBlock Text="Process Details" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                                                <Grid Margin="0,0,0,10">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="16"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="Process Name" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                        <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                            <TextBlock x:Name="DetailProcessName" FontSize="13"/>
-                                                        </Border>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="2">
-                                                        <TextBlock Text="Machine" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                        <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                            <TextBlock x:Name="DetailMachine" FontSize="13"/>
-                                                        </Border>
-                                                    </StackPanel>
-                                                </Grid>
-                                                <StackPanel Margin="0,0,0,10">
-                                                    <TextBlock Text="Tooling" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB" Width="220" HorizontalAlignment="Left">
-                                                        <TextBlock x:Name="DetailTooling" FontSize="13"/>
-                                                    </Border>
+                                        <TextBlock Text="PRODUCT INFORMATION" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,12"/>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Part Number" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailPn" Grid.Column="1" FontSize="12" FontWeight="Bold" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Product Name" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailName" Grid.Column="1" FontSize="12" FontWeight="SemiBold" Foreground="#111827" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Family" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailFamily" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Group" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailGroup" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Type" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailType" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Revision" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailRevision" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Status" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailStatus" Grid.Column="1" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Created By" FontSize="11" Foreground="#6B7280" VerticalAlignment="Top" Margin="0,2,0,0"/>
+                                            <TextBlock x:Name="TxtDetailCreatedBy" Grid.Column="1" FontSize="12" Foreground="#374151" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Last Updated" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailUpdatedAt" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Separator Margin="0,4,0,8" Background="#F3F4F6"/>
+                                        <TextBlock Text="DESCRIPTION" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                                        <TextBlock x:Name="TxtDetailDesc" FontSize="12" Foreground="#374151" TextWrapping="Wrap" LineHeight="18"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Manufacturing Info Card -->
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="MANUFACTURING" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,12"/>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Factory" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailFactory" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Line" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailLine" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Prod. Type" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtDetailProdType" Grid.Column="1" FontSize="12" Foreground="#374151" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <TextBlock Text="Notes" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock x:Name="TxtDetailMfgNotes" FontSize="12" Foreground="#374151" TextWrapping="Wrap" LineHeight="18"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Specification Card -->
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="SPECIFICATIONS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,12"/>
+
+                                        <!-- Dimensions -->
+                                        <TextBlock Text="Dimensions (mm)" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Length" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecLength" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecLenTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Width" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecWidth" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecWidTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Height" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecHeight" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecHgtTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Electrical -->
+                                        <TextBlock Text="Electrical" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Inductance" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecInductance" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIndTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Isat" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIsaat" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIsaatTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="DCR" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecDcr" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"/>
+                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecDcrTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- RIGHT PANEL: Tabs (Process / Documents / Materials) -->
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Process Tabs Header Bar -->
+                            <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1,1,1,0" CornerRadius="8,8,0,0" Padding="4,4,4,0">
+                                <WrapPanel x:Name="DetailProcessTabBar" Orientation="Horizontal"/>
+                            </Border>
+
+                            <!-- Tabs Content Area -->
+                            <Border Grid.Row="1" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="0,0,8,8">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                                    <StackPanel>
+
+                                        <!-- Process Detail Panel -->
+                                        <StackPanel x:Name="DetailProcessPanel" Visibility="Collapsed">
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="12"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="PROCESS NAME" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                    <TextBlock x:Name="DetailProcessName" FontSize="14" FontWeight="Bold" Foreground="#1F1F1F"/>
                                                 </StackPanel>
-                                                <StackPanel Margin="0,0,0,14">
-                                                    <TextBlock Text="Process Description" FontSize="11" Foreground="#6B7280" Margin="0,0,0,3"/>
-                                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="8,6" Background="#F9FAFB">
-                                                        <TextBlock x:Name="DetailProcessDesc" FontSize="12" TextWrapping="Wrap"/>
-                                                    </Border>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="MACHINE" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                    <TextBlock x:Name="DetailMachine" FontSize="13" Foreground="#374151"/>
                                                 </StackPanel>
-                                                <!-- Parameters Table -->
-                                                <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4">
-                                                    <StackPanel>
-                                                        <Grid Background="#F9FAFB" Height="34">
+                                            </Grid>
+
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="12"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="TOOLING" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                    <TextBlock x:Name="DetailTooling" FontSize="13" Foreground="#374151"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <TextBlock Text="PROCESS DESCRIPTION" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                                            <TextBlock x:Name="DetailProcessDesc" FontSize="12" Foreground="#374151" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,16"/>
+
+                                            <TextBlock Text="PROCESS PARAMETERS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,8"/>
+                                            <DataGrid x:Name="DetailParamList" AutoGenerateColumns="False"
+                                                      IsReadOnly="True" GridLinesVisibility="None"
+                                                      HeadersVisibility="Column" RowHeight="28"
+                                                      Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                                                      ColumnHeaderHeight="28" SelectionMode="Single">
+                                                <DataGrid.ColumnHeaderStyle>
+                                                    <Style TargetType="DataGridColumnHeader">
+                                                        <Setter Property="Background" Value="#F9FAFB"/>
+                                                        <Setter Property="Foreground" Value="#374151"/>
+                                                        <Setter Property="FontSize" Value="11"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="Padding" Value="8,0"/>
+                                                        <Setter Property="BorderBrush" Value="#E5E7EB"/>
+                                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                    </Style>
+                                                </DataGrid.ColumnHeaderStyle>
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Parameter" Binding="{Binding ParameterName}" Width="*"/>
+                                                    <DataGridTextColumn Header="Value" Binding="{Binding ParameterValue}" Width="100"/>
+                                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="70"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </StackPanel>
+
+                                        <Separator Margin="0,16" Background="#E5E7EB"/>
+
+                                        <!-- Documents Section -->
+                                        <TextBlock Text="DOCUMENTS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,10"/>
+                                        <ItemsControl x:Name="DetailDocList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6"
+                                                            Background="#FAFAFA" Padding="12,8" Margin="0,0,0,6">
+                                                        <Grid>
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="120"/>
-                                                                <ColumnDefinition Width="100"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock Text="Parameter" FontSize="10" FontWeight="Bold" Foreground="#6B7280" Margin="12,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Grid.Column="1" Text="Value" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                                            <TextBlock Grid.Column="2" Text="Unit" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                                            <StackPanel Grid.Column="0">
+                                                                <TextBlock Text="{Binding DocumentName}" FontSize="12" FontWeight="SemiBold" Foreground="#1F1F1F"/>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                                    <TextBlock Text="{Binding DocumentType}" FontSize="11" Foreground="#6B7280"/>
+                                                                    <TextBlock Text=" · Rev " FontSize="11" Foreground="#9CA3AF"/>
+                                                                    <TextBlock Text="{Binding Revision}" FontSize="11" Foreground="#6B7280"/>
+                                                                    <TextBlock Text=" · " FontSize="11" Foreground="#9CA3AF"/>
+                                                                    <TextBlock Text="{Binding UploadedBy}" FontSize="11" Foreground="#6B7280"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <Button Click="BtnOpenDoc_Click" Background="Transparent" BorderThickness="0"
+                                                                        Cursor="Hand" ToolTip="Open" Padding="4,2" Margin="0,0,4,0">
+                                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8A7;" FontSize="13" Foreground="#6D28D9"/>
+                                                                </Button>
+                                                                <Button Click="BtnDownloadDoc_Click" Background="Transparent" BorderThickness="0"
+                                                                        Cursor="Hand" ToolTip="Download" Padding="4,2" Margin="0,0,4,0">
+                                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE896;" FontSize="13" Foreground="#0D9488"/>
+                                                                </Button>
+                                                                <Button Click="BtnDeleteDocDetail_Click" Background="Transparent" BorderThickness="0"
+                                                                        Cursor="Hand" ToolTip="Delete"
+                                                                        Visibility="{Binding RelativeSource={RelativeSource AncestorType=ItemsControl}, Path=Tag}"
+                                                                        Padding="4,2">
+                                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="13" Foreground="#DC2626"/>
+                                                                </Button>
+                                                            </StackPanel>
                                                         </Grid>
-                                                        <ItemsControl x:Name="DetailParamList">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
-                                                                        <Grid Height="34">
-                                                                            <Grid.ColumnDefinitions>
-                                                                                <ColumnDefinition Width="*"/>
-                                                                                <ColumnDefinition Width="120"/>
-                                                                                <ColumnDefinition Width="100"/>
-                                                                            </Grid.ColumnDefinitions>
-                                                                            <TextBlock Text="{Binding ParameterName}" FontSize="12" Margin="12,0" VerticalAlignment="Center"/>
-                                                                            <TextBlock Grid.Column="1" Text="{Binding ParameterValue}" FontSize="12" VerticalAlignment="Center"/>
-                                                                            <TextBlock Grid.Column="2" Text="{Binding Unit}" FontSize="12" VerticalAlignment="Center" Foreground="#6B7280"/>
-                                                                        </Grid>
-                                                                    </Border>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </StackPanel>
-                                                </Border>
-                                            </StackPanel>
-                                        </Border>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Separator Margin="0,16" Background="#E5E7EB"/>
+
+                                        <!-- Materials Section -->
+                                        <TextBlock Text="BILL OF MATERIALS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,10"/>
+                                        <DataGrid x:Name="DetailMaterialList" AutoGenerateColumns="False"
+                                                  IsReadOnly="True" GridLinesVisibility="None"
+                                                  HeadersVisibility="Column" RowHeight="28"
+                                                  Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                                                  ColumnHeaderHeight="28" SelectionMode="Single">
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#F9FAFB"/>
+                                                    <Setter Property="Foreground" Value="#374151"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Padding" Value="8,0"/>
+                                                    <Setter Property="BorderBrush" Value="#E5E7EB"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Part Number" Binding="{Binding PartNumber}" Width="130" FontWeight="SemiBold"/>
+                                                <DataGridTextColumn Header="Part Name" Binding="{Binding PartName}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
                                     </StackPanel>
-                                </Border>
-
-                                <!-- Supporting Documents -->
-                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
-                                        CornerRadius="8" Padding="20">
-                                    <StackPanel>
-                                        <Grid Margin="0,0,0,14">
-                                            <TextBlock Text="Supporting Documents" FontSize="14"
-                                                       FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center"/>
-                                            <Border x:Name="BtnUploadDocBorder" HorizontalAlignment="Right"
-                                                    Background="White" BorderBrush="#D1D5DB"
-                                                    BorderThickness="1" CornerRadius="4"
-                                                    Visibility="Collapsed">
-                                                <Button x:Name="BtnUploadDoc" Content="Upload Document"
-                                                        Click="BtnUploadDoc_Click"
-                                                        Height="30" Padding="12,0" Background="Transparent"
-                                                        Foreground="#374151" FontSize="12"
-                                                        BorderThickness="0" Cursor="Hand"/>
-                                            </Border>
-                                        </Grid>
-                                        <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4">
-                                            <StackPanel>
-                                                <Grid Background="#F9FAFB" Height="36">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="140"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="130"/>
-                                                        <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="130"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Document Name" FontSize="10" FontWeight="Bold" Foreground="#6B7280" Margin="12,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1" Text="Document Type" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="Document Revision" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="File Name" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="4" Text="Actions" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                                </Grid>
-                                                <ItemsControl x:Name="DetailDocList">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
-                                                                <Grid MinHeight="36">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="140"/>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="130"/>
-                                                                        <ColumnDefinition Width="150"/>
-                                                                        <ColumnDefinition Width="130"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <TextBlock Text="{Binding DocumentName}" FontSize="12" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                                                    <TextBlock Grid.Column="1" Text="{Binding DocumentType}" FontSize="12" VerticalAlignment="Center"/>
-                                                                    <TextBlock Grid.Column="2" Text="{Binding Revision}" FontSize="12" VerticalAlignment="Center"/>
-                                                                    <TextBlock Grid.Column="3" Text="{Binding FileName}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                                                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                        <Button Content="Open" Background="Transparent" Foreground="#2563EB"
-                                                                                BorderThickness="0" FontSize="12" Cursor="Hand" Margin="0,0,8,0"
-                                                                                Click="BtnOpenDoc_Click" DataContext="{Binding}"/>
-                                                                        <Button Content="Download" Background="Transparent" Foreground="#2563EB"
-                                                                                BorderThickness="0" FontSize="12" Cursor="Hand" Margin="0,0,8,0"
-                                                                                Click="BtnDownloadDoc_Click" DataContext="{Binding}"/>
-                                                                        <Button Content="Delete" Background="Transparent"
-                                                                                Foreground="#DC2626" BorderThickness="0" FontSize="12" Cursor="Hand"
-                                                                                Click="BtnDeleteDocDetail_Click" DataContext="{Binding}"
-                                                                                Visibility="{Binding RelativeSource={RelativeSource AncestorType=ItemsControl}, Path=Tag}"/>
-                                                                    </StackPanel>
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-
-                            <!-- Right: Spec Panel -->
-                            <Border Grid.Column="1" Background="White" BorderBrush="#E5E7EB"
-                                    BorderThickness="1" CornerRadius="8" Padding="16" VerticalAlignment="Top">
-                                <StackPanel>
-                                    <TextBlock Text="Product Specification" FontSize="13"
-                                               FontWeight="SemiBold" Foreground="#111827" Margin="0,0,0,14"/>
-
-                                    <!-- DIMENSIONS -->
-                                    <TextBlock Text="DIMENSIONS" FontSize="9" FontWeight="Bold"
-                                               Foreground="#6B7280" Margin="0,0,0,8"/>
-                                    <Grid Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Length" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecLength" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecLenTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Grid Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Width" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecWidth" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecWidTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Grid Margin="0,0,0,14">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Height" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecHeight" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecHgtTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-
-                                    <!-- ELECTRICAL -->
-                                    <TextBlock Text="ELECTRICAL" FontSize="9" FontWeight="Bold"
-                                               Foreground="#6B7280" Margin="0,0,0,8"/>
-                                    <Grid Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Inductance" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecInductance" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecIndTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Grid Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="ISAAT" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecIsaat" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecIsaatTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Grid Margin="0,0,0,14">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="60"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="DCR" FontSize="12" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecDcr" Grid.Column="1" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SpecDcrTol" Grid.Column="2" FontSize="11" Foreground="#9CA3AF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-
-                                    <!-- MATERIALS -->
-                                    <TextBlock Text="MATERIALS" FontSize="9" FontWeight="Bold"
-                                               Foreground="#6B7280" Margin="0,0,0,8"/>
-                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4">
-                                        <StackPanel>
-                                            <Grid Background="#F9FAFB" Height="28">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Part Number" FontSize="10" FontWeight="Bold"
-                                                           Foreground="#6B7280" Margin="8,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="Part Name" FontSize="10" FontWeight="Bold"
-                                                           Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            </Grid>
-                                            <ItemsControl x:Name="DetailMaterialList">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
-                                                            <Grid Height="30">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Text="{Binding PartNumber}" FontSize="11"
-                                                                           Margin="8,0" VerticalAlignment="Center" Foreground="#2563EB" FontWeight="SemiBold"/>
-                                                                <TextBlock Grid.Column="1" Text="{Binding PartName}"
-                                                                           FontSize="11" VerticalAlignment="Center" Foreground="#374151"/>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
+                                </ScrollViewer>
                             </Border>
                         </Grid>
-                    </ScrollViewer>
+                    </Grid>
                 </Grid>
 
                 <!-- MATERIAL INVENTORY VIEW -->
@@ -1027,17 +1036,35 @@
                                                    Foreground="#64748B" FontSize="11"
                                                    Margin="8,0,5,0" VerticalAlignment="Center"/>
                                         <TextBox x:Name="TxtSearchMaterialInput" Grid.Column="1"
-                                                 Text="Search Part No, Description, Lot, Location..."
-                                                 Foreground="#64748B" FontSize="11"
+                                                 Text=""
+                                                 Foreground="#1E0734" FontSize="11"
                                                  VerticalContentAlignment="Center" Padding="0,0,8,0"
                                                  BorderThickness="0" Background="Transparent"
-                                                 GotFocus="TxtSearchMaterial_GotFocus" LostFocus="TxtSearchMaterial_LostFocus"
-                                                 KeyUp="TxtSearchMaterial_KeyUp"/>
+                                                 KeyUp="TxtSearchMaterial_KeyUp">
+                                            <TextBox.Style>
+                                                <Style TargetType="TextBox">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Text" Value="">
+                                                            <Setter Property="Background">
+                                                                <Setter.Value>
+                                                                    <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                                                                        <VisualBrush.Visual>
+                                                                            <TextBlock Text="Search Part No, Description, Lot, Location..."
+                                                                                       Foreground="#94A3B8" FontSize="11" Margin="2,0,0,0"/>
+                                                                        </VisualBrush.Visual>
+                                                                    </VisualBrush>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBox.Style>
+                                        </TextBox>
                                     </Grid>
                                 </Border>
 
                                 <!-- Part Number Filter -->
-                                <ComboBox x:Name="CmbFilterMaterialPartNumber" Width="140" Height="30" Margin="0,0,10,0"
+                                <ComboBox x:Name="CmbFilterMaterialPartNumber" Width="140" Height="30" Margin="0,0,14,0"
                                           FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
                                     <ComboBoxItem Content="All Part Numbers" IsSelected="True"/>
                                 </ComboBox>
@@ -1150,7 +1177,7 @@
                                     </DataGridTemplateColumn>
 
                                     <!-- Item Description -->
-                                    <DataGridTextColumn Header="Item Description" Binding="{Binding ItemDescription}" Width="220" FontWeight="SemiBold"/>
+                                    <DataGridTextColumn Header="Item Description" Binding="{Binding ItemDescription}" Width="2*" MinWidth="180" FontWeight="SemiBold"/>
 
                                     <!-- Item Code -->
                                     <DataGridTextColumn Header="Item Code" Binding="{Binding ItemCode}" Width="105"/>
@@ -1227,6 +1254,16 @@
                         </Grid>
                     </Border>
                 </Grid>
+
+                <!-- TOOLING VIEW -->
+                <Grid x:Name="ViewTooling" Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE946;" FontSize="64" Foreground="#B0B0B0" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBlock Text="Tooling Module" FontSize="24" FontWeight="SemiBold" Foreground="#334155" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="This module is currently under development." FontSize="14" Foreground="#64748B" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
 
             </Grid>
         </Grid>

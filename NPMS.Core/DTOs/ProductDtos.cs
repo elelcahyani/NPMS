@@ -21,7 +21,7 @@ namespace NPMS.Core.DTOs
         public bool IsRdTeam { get; set; }          // kept for backward compat (= CanEditProduct)
         public bool CanManageUsers { get; set; }    // Super Admin only
         public bool CanEditProduct { get; set; }    // R&D Team
-        public bool CanAccessStore { get; set; }    // Super Admin (read) + Store Manager (crud)
+        public bool CanAccessStore { get; set; }    // Super Admin, Store Manager, and R&D Team
         public bool CanEditStore { get; set; }      // Store Manager only
         public bool CanAccessSettings { get; set; } // Super Admin only
     }
@@ -60,7 +60,6 @@ namespace NPMS.Core.DTOs
         public ProductSpecificationDto Specification { get; set; } = new();
         public ManufacturingInfoDto ManufacturingInfo { get; set; } = new();
         public List<ProcessStepDto> Processes { get; set; } = new();
-        public List<ProductMaterialDto> Materials { get; set; } = new();
         public List<DocumentDto> Documents { get; set; } = new();
     }
 
@@ -81,14 +80,6 @@ namespace NPMS.Core.DTOs
         public string IsaatTolerance { get; set; } = string.Empty;
         public string Dcr { get; set; } = string.Empty;
         public string DcrTolerance { get; set; } = string.Empty;
-    }
-
-    public class ProductMaterialDto
-    {
-        public int MaterialId { get; set; }
-        public int ProductId { get; set; }
-        public string PartNumber { get; set; } = string.Empty;
-        public string PartName { get; set; } = string.Empty;
     }
 
     public class ManufacturingInfoDto
@@ -121,10 +112,72 @@ namespace NPMS.Core.DTOs
         public string Unit { get; set; } = string.Empty;
     }
 
+    public class ToolingDto
+    {
+        public int ToolingId { get; set; }
+        public string ToolingCode { get; set; } = string.Empty;
+        public string ToolingName { get; set; } = string.Empty;
+        public DateTime EntryDate { get; set; }
+        public string ItemCode { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public string Lot { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public double Qty { get; set; }
+        public double AvailableQty { get; set; }
+        public string Package { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
+    }
+
+    public class ToolingSaveDto
+    {
+        public int ToolingId { get; set; }
+        public string ToolingCode { get; set; } = string.Empty;
+        public string ToolingName { get; set; } = string.Empty;
+        public DateTime EntryDate { get; set; } = DateTime.Now;
+        public string ItemCode { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public string Lot { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public double Qty { get; set; }
+        public string Package { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
+    }
+
+    public class UsageRequestDto
+    {
+        public int RequestId { get; set; }
+        public string ItemType { get; set; } = string.Empty;
+        public int InventoryId { get; set; }
+        public string PartNumber { get; set; } = string.Empty;
+        public string ItemDescription { get; set; } = string.Empty;
+        public string Lot { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public double RequestedQty { get; set; }
+        public double? ReturnedQty { get; set; }
+        public double? UsedQty => ReturnedQty.HasValue ? RequestedQty - ReturnedQty.Value : null;
+        public string Reason { get; set; } = string.Empty;
+        public string RequestedBy { get; set; } = string.Empty;
+        public DateTime RequestedAt { get; set; }
+        public DateTime RequestedAtLocal => RequestedAt.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(RequestedAt, DateTimeKind.Utc).ToLocalTime()
+            : RequestedAt.ToLocalTime();
+        public string? ConfirmedBy { get; set; }
+        public DateTime? ConfirmedAt { get; set; }
+        public string? ReturnedBy { get; set; }
+        public DateTime? ReturnedAt { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+
     public class DocumentDto
     {
         public int DocumentId { get; set; }
         public int ProductId { get; set; }
+        public string? ProcessName { get; set; }
+        public string ProcessScope => string.IsNullOrWhiteSpace(ProcessName) ? "All processes" : ProcessName;
         public string DocumentName { get; set; } = string.Empty;
         public string DocumentType { get; set; } = string.Empty;
         public string Revision { get; set; } = string.Empty;
@@ -151,7 +204,6 @@ namespace NPMS.Core.DTOs
         public ProductSpecificationDto Specification { get; set; } = new();
         public ManufacturingInfoDto ManufacturingInfo { get; set; } = new();
         public List<ProcessStepDto> Processes { get; set; } = new();
-        public List<ProductMaterialDto> Materials { get; set; } = new();
         public List<DocumentDto> Documents { get; set; } = new();
     }
 
@@ -163,9 +215,12 @@ namespace NPMS.Core.DTOs
         public string ItemDescription { get; set; } = string.Empty;
         public string ItemCode { get; set; } = string.Empty;
         public string UoM { get; set; } = "PCS";
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
         public string Lot { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public double Qty { get; set; }
+        public double AvailableQty { get; set; }
         public string Package { get; set; } = string.Empty;
         public string Remarks { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
@@ -181,6 +236,8 @@ namespace NPMS.Core.DTOs
         public string ItemDescription { get; set; } = string.Empty;
         public string ItemCode { get; set; } = string.Empty;
         public string UoM { get; set; } = "PCS";
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
         public string Lot { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public double Qty { get; set; }

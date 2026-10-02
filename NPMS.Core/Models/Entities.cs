@@ -23,6 +23,13 @@ namespace NPMS.Core.Models
         public bool IsActive { get; set; } = true;
     }
 
+    public class RegisteredPartNumber
+    {
+        [Key]
+        public string PartNumber { get; set; } = string.Empty;
+        public string ItemType { get; set; } = string.Empty;
+    }
+
     public class Product
     {
         [Key]
@@ -43,7 +50,6 @@ namespace NPMS.Core.Models
         public ProductSpecification? Specification { get; set; }
         public ManufacturingInformation? ManufacturingInfo { get; set; }
         public List<ProcessStep> Processes { get; set; } = new();
-        public List<ProductMaterial> Materials { get; set; } = new();
         public List<DocumentMetadata> Documents { get; set; } = new();
     }
 
@@ -69,16 +75,6 @@ namespace NPMS.Core.Models
         public string IsaatTolerance { get; set; } = string.Empty;
         public string Dcr { get; set; } = string.Empty;
         public string DcrTolerance { get; set; } = string.Empty;
-    }
-
-    public class ProductMaterial
-    {
-        [Key]
-        public int MaterialId { get; set; }
-        public int ProductId { get; set; }
-        public Product? Product { get; set; }
-        public string PartNumber { get; set; } = string.Empty;
-        public string PartName { get; set; } = string.Empty;
     }
 
     public class ManufacturingInformation
@@ -109,6 +105,38 @@ namespace NPMS.Core.Models
         public int ToolingId { get; set; }
         public string ToolingName { get; set; } = string.Empty;
         public string ToolingCode { get; set; } = string.Empty;
+        public DateTime EntryDate { get; set; } = DateTime.Now;
+        public string ItemCode { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public string Location { get; set; } = string.Empty;
+        public double Qty { get; set; }
+        public string Lot { get; set; } = string.Empty;
+        public string Package { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
+    }
+
+    public class UsageRequest
+    {
+        [Key]
+        public int RequestId { get; set; }
+        public string ItemType { get; set; } = string.Empty;
+        public int InventoryId { get; set; }
+        public string PartNumber { get; set; } = string.Empty;
+        public string ItemDescription { get; set; } = string.Empty;
+        public string Lot { get; set; } = string.Empty;
+        public string UoM { get; set; } = "PCS";
+        public double RequestedQty { get; set; }
+        public double? ReturnedQty { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string RequestedBy { get; set; } = string.Empty;
+        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+        public string? ConfirmedBy { get; set; }
+        public DateTime? ConfirmedAt { get; set; }
+        public string? ReturnedBy { get; set; }
+        public DateTime? ReturnedAt { get; set; }
+        public string Status { get; set; } = "Pending";
     }
 
     public class ProcessStep
@@ -144,6 +172,7 @@ namespace NPMS.Core.Models
         public int DocumentId { get; set; }
         public int ProductId { get; set; }
         public Product? Product { get; set; }
+        public string? ProcessName { get; set; }
         public string DocumentName { get; set; } = string.Empty;
         public string DocumentType { get; set; } = string.Empty; // Work Instruction, Drawing, Manufacturing Specification, Inspection Standard, Other
         public string Revision { get; set; } = string.Empty;
@@ -158,11 +187,13 @@ namespace NPMS.Core.Models
     {
         [Key]
         public int MaterialId { get; set; }
-        public string PartNumber { get; set; } = string.Empty; // Linked to material part numbers in product dashboard
+        public string PartNumber { get; set; } = string.Empty; // Shared material identifier; multiple inventory lots may use it
         public DateTime EntryDate { get; set; } = DateTime.Now; // Tanggal Masuk
         public string ItemDescription { get; set; } = string.Empty; // Item Description
         public string ItemCode { get; set; } = string.Empty; // Item Code
         public string UoM { get; set; } = "PCS"; // UoM
+        public string ProductPartNumber { get; set; } = string.Empty;
+        public string ProductFamily { get; set; } = string.Empty;
         public string Lot { get; set; } = string.Empty; // Lot
         public string Location { get; set; } = string.Empty; // Location
         public double Qty { get; set; } // Qty

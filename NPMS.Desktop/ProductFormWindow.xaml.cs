@@ -4,7 +4,6 @@ using NPMS.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -27,9 +26,6 @@ namespace NPMS.Desktop
         // Documents added during this session
         private ObservableCollection<DocumentDto> _docs = new();
 
-        // Materials
-        private ObservableCollection<MaterialViewModel> _materials = new();
-
         // Image path
         private string _imagePath = "";
         // Track whether user has made any changes
@@ -47,7 +43,6 @@ namespace NPMS.Desktop
             Title = "Add New Product — NPMS";
             DocList.ItemsSource = _docs;
             ParamList.ItemsSource = _currentParams;
-            MaterialList.ItemsSource = _materials;
             ProcessDetailPanel.Visibility = Visibility.Collapsed;
             SubscribeDirtyTracking();
         }
@@ -65,7 +60,6 @@ namespace NPMS.Desktop
             Title = $"Edit Product — NPMS";
             DocList.ItemsSource = _docs;
             ParamList.ItemsSource = _currentParams;
-            MaterialList.ItemsSource = _materials;
             ProcessDetailPanel.Visibility = Visibility.Collapsed;
             PopulateForm(existing);
             // Reset dirty after populating — user hasn't changed anything yet
@@ -168,12 +162,6 @@ namespace NPMS.Desktop
             foreach (var doc in p.Documents)
                 _docs.Add(doc);
 
-            foreach (var mat in p.Materials)
-                _materials.Add(new MaterialViewModel
-                {
-                    PartNumber = mat.PartNumber,
-                    PartName = mat.PartName
-                });
         }
 
         // ─── PROCESS TABS ────────────────────────────────────────────────────
@@ -353,7 +341,8 @@ namespace NPMS.Desktop
             if (fileDlg.ShowDialog() != true) return;
 
             var defaultName = Path.GetFileNameWithoutExtension(fileDlg.FileName);
-            var metaDlg = new UploadDocumentDialog(defaultName) { Owner = this };
+            var metaDlg = new UploadDocumentDialog(defaultName,
+                _steps.Select(step => step.ProcessName)) { Owner = this };
             if (metaDlg.ShowDialog() != true) return;
 
             _isDirty = true;
@@ -361,6 +350,7 @@ namespace NPMS.Desktop
             {
                 DocumentName = metaDlg.DocumentName,
                 DocumentType = metaDlg.DocumentType,
+                ProcessName = metaDlg.ProcessName,
                 Revision = metaDlg.Revision,
                 FileName = Path.GetFileName(fileDlg.FileName),
                 FilePath = fileDlg.FileName,
@@ -405,21 +395,6 @@ namespace NPMS.Desktop
                 ImgPlaceholder.Visibility = Visibility.Collapsed;
             }
             catch { }
-        }
-
-        private void BtnAddMaterial_Click(object sender, RoutedEventArgs e)
-        {
-            _isDirty = true;
-            _materials.Add(new MaterialViewModel { PartNumber = "", PartName = "" });
-        }
-
-        private void BtnRemoveMaterial_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.DataContext is MaterialViewModel mat)
-            {
-                _isDirty = true;
-                _materials.Remove(mat);
-            }
         }
 
         private void BtnAddSpec_Click(object sender, RoutedEventArgs e)
@@ -594,12 +569,7 @@ namespace NPMS.Desktop
                     ProcessOwner = _currentUser,
                     ManufacturingNotes = MfgNotes.Text.Trim()
                 },
-                Processes = _steps.ToList(),
-                Materials = _materials.Select(m => new ProductMaterialDto
-                {
-                    PartNumber = m.PartNumber,
-                    PartName = m.PartName
-                }).ToList()
+                Processes = _steps.ToList()
             };
 
             // Disable save buttons to prevent double-submit
@@ -631,7 +601,7 @@ namespace NPMS.Desktop
                         {
                             var bytes = File.ReadAllBytes(doc.FilePath);
                             _service.AddDocument(SavedProduct.ProductId, doc.DocumentName,
-                                doc.DocumentType, doc.Revision, doc.FileName, bytes, _currentUser);
+                                doc.DocumentType, doc.Revision, doc.FileName, bytes, _currentUser, doc.ProcessName);
                         }
                         catch (Exception ex)
                         {
@@ -664,25 +634,4 @@ namespace NPMS.Desktop
         private void HideError() => ErrorBorder.Visibility = Visibility.Collapsed;
     }
 
-    public class MaterialViewModel : INotifyPropertyChanged
-    {
-        private string _partNumber = "";
-        private string _partName = "";
-
-        public string PartNumber
-        {
-            get => _partNumber;
-            set { _partNumber = value; OnPropertyChanged(nameof(PartNumber)); }
-        }
-
-        public string PartName
-        {
-            get => _partName;
-            set { _partName = value; OnPropertyChanged(nameof(PartName)); }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
 }

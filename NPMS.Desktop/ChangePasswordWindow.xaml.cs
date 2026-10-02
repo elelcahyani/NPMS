@@ -7,12 +7,14 @@ namespace NPMS.Desktop
     {
         private readonly IProductService _service;
         private readonly int _userId;
+        private readonly string _username;
 
-        public ChangePasswordWindow(IProductService service, int userId)
+        public ChangePasswordWindow(IProductService service, int userId, string username)
         {
             InitializeComponent();
             _service = service;
             _userId = userId;
+            _username = username;
             TxtCurrentPwd.Focus();
             // Enter key moves focus forward through fields
             TxtCurrentPwd.KeyDown += (s, e) => { if (e.Key == System.Windows.Input.Key.Enter) TxtNewPwd.Focus(); };
@@ -34,6 +36,11 @@ namespace NPMS.Desktop
             if (newPwd.Length < 8)
             {
                 ShowError("Password baru minimal 8 karakter.");
+                return;
+            }
+            if (string.Equals(_username, newPwd, System.StringComparison.Ordinal))
+            {
+                ShowError("Password tidak boleh sama dengan username.");
                 return;
             }
             if (newPwd != confirm)

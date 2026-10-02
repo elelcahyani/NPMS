@@ -1,8 +1,6 @@
 using NPMS.Core.DTOs;
 using NPMS.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -13,7 +11,6 @@ namespace NPMS.Desktop
         private readonly IProductService _service;
         private readonly string _username;
         private readonly StoreMaterialDto? _editingMaterial;
-        private List<ProductMaterialDto> _productMaterials = new();
 
         public StoreMaterialDto? SavedMaterial { get; private set; }
 
@@ -24,8 +21,8 @@ namespace NPMS.Desktop
             _username = username;
             _editingMaterial = materialToEdit;
 
+            CmbProductPartNumber.ItemsSource = _service.SearchProducts(null, null, null);
             DpEntryDate.SelectedDate = DateTime.Now;
-            LoadPartNumbers();
 
             if (_editingMaterial != null)
             {
@@ -33,61 +30,20 @@ namespace NPMS.Desktop
                 BtnSave.Content = "Update Material";
                 PopulateFormFields(_editingMaterial);
             }
+
         }
 
-        private void LoadPartNumbers()
+        private void CmbProductPartNumber_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            _productMaterials = _service.GetAllProductMaterials();
-
-            CmbPartNumber.Items.Clear();
-
-            if (_productMaterials.Count == 0)
-            {
-                var emptyItem = new ComboBoxItem
-                {
-                    Content = "-- Belum ada Material Part Number di Product Dashboard --",
-                    IsEnabled = false
-                };
-                CmbPartNumber.Items.Add(emptyItem);
-                CmbPartNumber.SelectedIndex = 0;
-                return;
-            }
-
-            foreach (var pm in _productMaterials)
-            {
-                var item = new ComboBoxItem
-                {
-                    Content = pm.PartNumber,
-                    Tag = pm.PartName
-                };
-                CmbPartNumber.Items.Add(item);
-            }
-        }
-
-        private void CmbPartNumber_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (CmbPartNumber.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
-            {
-                string partName = selectedItem.Tag.ToString() ?? "";
-                if (string.IsNullOrWhiteSpace(TxtItemDescription.Text) && !string.IsNullOrWhiteSpace(partName))
-                {
-                    TxtItemDescription.Text = partName;
-                }
-            }
+            if (CmbProductPartNumber.SelectedItem is ProductListDto product)
+                TxtProductFamily.Text = product.ProductFamily;
         }
 
         private void PopulateFormFields(StoreMaterialDto dto)
         {
-            // Set Part Number
-            foreach (ComboBoxItem item in CmbPartNumber.Items)
-            {
-                if (item.Content?.ToString() == dto.PartNumber)
-                {
-                    CmbPartNumber.SelectedItem = item;
-                    break;
-                }
-            }
-
+            TxtPartNumber.Text = dto.PartNumber;
+            CmbProductPartNumber.SelectedValue = dto.ProductPartNumber;
+            TxtProductFamily.Text = dto.ProductFamily;
             DpEntryDate.SelectedDate = dto.EntryDate;
             TxtItemDescription.Text = dto.ItemDescription;
             TxtItemCode.Text = dto.ItemCode;
@@ -114,10 +70,16 @@ namespace NPMS.Desktop
             TxtError.Text = "";
 
             // Validation
-            var selectedPartNumber = (CmbPartNumber.SelectedItem as ComboBoxItem)?.Content?.ToString();
-            if (string.IsNullOrWhiteSpace(selectedPartNumber) || selectedPartNumber.StartsWith("--"))
+            var partNumber = TxtPartNumber.Text.Trim();
+            if (string.IsNullOrWhiteSpace(partNumber))
             {
-                ShowError("Silakan pilih Part Number material dari Product Dashboard.");
+                ShowError("Part Number wajib diisi.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CmbProductPartNumber.SelectedValue?.ToString()))
+            {
+                ShowError("PN Product wajib dipilih.");
                 return;
             }
 
@@ -130,6 +92,12 @@ namespace NPMS.Desktop
             if (string.IsNullOrWhiteSpace(TxtItemDescription.Text))
             {
                 ShowError("Item Description wajib diisi.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(TxtLot.Text))
+            {
+                ShowError("Lot wajib diisi.");
                 return;
             }
 
@@ -150,11 +118,13 @@ namespace NPMS.Desktop
             var dto = new StoreMaterialSaveDto
             {
                 MaterialId = _editingMaterial?.MaterialId ?? 0,
-                PartNumber = selectedPartNumber,
+                PartNumber = partNumber,
                 EntryDate = DpEntryDate.SelectedDate.Value,
                 ItemDescription = TxtItemDescription.Text.Trim(),
                 ItemCode = TxtItemCode.Text.Trim(),
                 UoM = selectedUom,
+                ProductPartNumber = CmbProductPartNumber.SelectedValue?.ToString() ?? string.Empty,
+                ProductFamily = TxtProductFamily.Text,
                 Lot = TxtLot.Text.Trim(),
                 Location = TxtLocation.Text.Trim(),
                 Qty = qty,

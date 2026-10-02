@@ -18,7 +18,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock x:Name="TxtTitle" Text="Add New Material" FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
-                    <TextBlock Text="Part Number is linked directly to the Material Part Number on the Product Dashboard" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
+                    <TextBlock Text="Enter the part number and stock details for this inventory item." FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -40,10 +40,9 @@
                             <TextBlock Text="Part Number" FontSize="11" FontWeight="SemiBold" Foreground="#475569"/>
                             <TextBlock Text=" *" Foreground="#DC2626" FontSize="11" FontWeight="Bold"/>
                         </StackPanel>
-                        <ComboBox x:Name="CmbPartNumber" Height="36" BorderBrush="#CBD5E1" FontSize="12"
-                                  Background="White" Padding="8,0" VerticalContentAlignment="Center"
-                                  SelectionChanged="CmbPartNumber_SelectionChanged"/>
-                        <TextBlock Text="Select a part number from the Product Dashboard materials" FontSize="10" Foreground="#94A3B8" Margin="2,2,0,0"/>
+                        <TextBox x:Name="TxtPartNumber" Height="36" Padding="10,0" VerticalContentAlignment="Center"
+                                 BorderBrush="#CBD5E1" BorderThickness="1" FontSize="12"/>
+                        <TextBlock Text="Reuse this code for additional lots of the same material." FontSize="10" Foreground="#94A3B8" Margin="2,2,0,0"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
@@ -53,6 +52,29 @@
                         </StackPanel>
                         <DatePicker x:Name="DpEntryDate" Height="36" BorderBrush="#CBD5E1" FontSize="12"
                                     VerticalContentAlignment="Center" Padding="4,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="PN Product *" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#475569" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="CmbProductPartNumber" Height="36" Padding="8,0"
+                                  BorderBrush="#CBD5E1" FontSize="12" Background="White"
+                                  DisplayMemberPath="PartNumber" SelectedValuePath="PartNumber"
+                                  SelectionChanged="CmbProductPartNumber_SelectionChanged"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="P Family" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#475569" Margin="0,0,0,4"/>
+                        <TextBox x:Name="TxtProductFamily" Height="36" Padding="10,0"
+                                 IsReadOnly="True" VerticalContentAlignment="Center"
+                                 Background="#F1F5F9" BorderBrush="#CBD5E1" FontSize="12"/>
                     </StackPanel>
                 </Grid>
 
@@ -108,7 +130,8 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Lot Number" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
+                        <TextBlock Text="Lot Number (unique per Part Number)" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#475569" Margin="0,0,0,4" TextWrapping="Wrap"/>
                         <TextBox x:Name="TxtLot" Height="36" Padding="10,0" VerticalContentAlignment="Center"
                                  BorderBrush="#CBD5E1" BorderThickness="1" FontSize="12"/>
                     </StackPanel>

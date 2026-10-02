@@ -1,0 +1,45 @@
+<Window x:Class="NPMS.Desktop.UsageRequestDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Material Usage Request" Height="410" Width="430"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#F8FAFC" FontFamily="Segoe UI" FontSize="12">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="TxtTitle" Grid.Row="0" Text="Request Material Usage"
+                   FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
+        <TextBlock x:Name="TxtDescription" Grid.Row="1" Margin="0,6,0,16"
+                   Foreground="#64748B" TextWrapping="Wrap"/>
+        <TextBlock x:Name="TxtQuantityLabel" Grid.Row="2" Text="Quantity to request"
+                   FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,5"/>
+        <TextBox x:Name="TxtQuantity" Grid.Row="3" Height="34" Padding="9,5"
+                 VerticalContentAlignment="Center" FontSize="13" TextChanged="TxtQuantity_TextChanged"/>
+        <TextBlock x:Name="TxtCapacityWarning" Grid.Row="4" Foreground="#DC2626"
+                   Text="Requested quantity exceeds available stock capacity."
+                   TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed"/>
+        <StackPanel x:Name="ReasonPanel" Grid.Row="5" Margin="0,14,0,0">
+            <TextBlock x:Name="ReasonLabel" Text="Usage description" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,5"/>
+            <TextBox x:Name="TxtReason" Height="80" Padding="9,7" AcceptsReturn="True"
+                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+        </StackPanel>
+        <TextBlock x:Name="TxtError" Grid.Row="6" Foreground="#DC2626" TextWrapping="Wrap"
+                   Margin="0,8,0,0" Visibility="Collapsed"/>
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Cancel" Click="BtnCancel_Click" Padding="14,7" Margin="0,0,8,0"
+                    Background="White" Foreground="#475569" BorderBrush="#CBD5E1" Cursor="Hand"/>
+            <Button x:Name="BtnSubmit" Content="Send Request" Click="BtnSubmit_Click"
+                    IsDefault="True" IsEnabled="True" Focusable="True"
+                    Padding="14,7" Background="#6D28D9" Foreground="White"
+                    BorderThickness="0" FontWeight="SemiBold" Cursor="Hand"/>
+        </StackPanel>
+    </Grid>
+</Window>

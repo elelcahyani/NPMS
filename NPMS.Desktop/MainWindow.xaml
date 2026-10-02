@@ -3,11 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NPMS.Desktop"
         mc:Ignorable="d"
         Title="New Product Management System (NPMS)" Height="800" Width="1280"
         WindowStartupLocation="CenterScreen" Background="#F1F5F9"
         FontFamily="Segoe UI" FontSize="12">
     <Window.Resources>
+        <local:LowStockForegroundConverter x:Key="LowStockForegroundConverter"/>
+        <local:StockQuantityDisplayConverter x:Key="StockQuantityDisplayConverter"/>
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
         <Style x:Key="FilterComboStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="28"/>
             <Setter Property="Padding" Value="8,0"/>
@@ -17,6 +24,37 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#222222"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ProductActionIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ActionButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ActionButtonBorder" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ActionButtonBorder" Property="Opacity" Value="0.65"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ActionButtonBorder" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="ProcessTabStyle" TargetType="RadioButton">
             <Setter Property="Height" Value="32"/>
@@ -183,9 +221,39 @@
                         
                         <MenuItem Header="Dashboard" Name="BtnNavDashboard" Click="NavDashboard_Click"/>
                         
-                        <MenuItem Header="Store" Name="BtnNavStore">
+                        <MenuItem Name="BtnNavStore">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Store" VerticalAlignment="Center"/>
+                                    <Border x:Name="PendingStoreBadge" Background="#DC2626" CornerRadius="8"
+                                            MinWidth="16" Height="16" Padding="4,0" Margin="6,0,0,0"
+                                            VerticalAlignment="Center" Visibility="Collapsed"
+                                            ToolTip="Pending usage requests">
+                                        <TextBlock x:Name="TxtPendingStoreBadge" Text="0" Foreground="White"
+                                                   FontSize="10" FontWeight="Bold" TextAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </MenuItem.Header>
                             <MenuItem Header="Material" Name="BtnNavStoreMaterial" Style="{StaticResource SubMenuItemStyle}" Click="NavStoreMaterial_Click"/>
                             <MenuItem Header="Tooling" Name="BtnNavStoreTooling" Style="{StaticResource SubMenuItemStyle}" Click="NavStoreTooling_Click"/>
+                            <MenuItem Name="BtnNavUsageHistory" Style="{StaticResource SubMenuItemStyle}" Click="NavUsageHistory_Click">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Usage History" VerticalAlignment="Center"/>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7E7;" FontSize="12"
+                                                   Foreground="#DC2626" Margin="7,0,3,0"
+                                                   VerticalAlignment="Center" ToolTip="Pending usage requests"/>
+                                        <Border x:Name="PendingUsageBadge" Background="#DC2626" CornerRadius="8"
+                                                MinWidth="16" Height="16" Padding="4,0"
+                                                VerticalAlignment="Center" Visibility="Collapsed">
+                                            <TextBlock x:Name="TxtPendingUsageBadge" Text="0" Foreground="White"
+                                                       FontSize="10" FontWeight="Bold" TextAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </StackPanel>
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuItem>
                         
                         <MenuItem Header="Settings" Name="BtnNavSettings">
@@ -485,49 +553,43 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <!-- Read-only badge for non-R&D -->
                             <Border x:Name="BadgeAccess" Background="#F3E8FF" BorderBrush="#C4B5FD" BorderThickness="1"
-                                    CornerRadius="4" Padding="10,4" Margin="0,0,8,0" Visibility="Collapsed" VerticalAlignment="Center">
+                                    CornerRadius="4" Padding="10,4" Margin="0,0,12,0" Visibility="Collapsed" VerticalAlignment="Center">
                                 <TextBlock Text="🔒 Read Only" FontSize="11" Foreground="#6D28D9" FontWeight="SemiBold"/>
                             </Border>
-                            <!-- Upload Doc -->
-                            <Border x:Name="BtnUploadDocBorder" Background="#0D9488" CornerRadius="4" Margin="0,0,8,0" Visibility="Collapsed">
-                                <Button x:Name="BtnUploadDoc" Click="BtnUploadDoc_Click" Padding="12,6"
-                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
-                                        FontSize="12" BorderThickness="0" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE898;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Upload Doc" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </Border>
-                            <!-- Edit -->
-                            <Border x:Name="BtnEditProductBorder" Background="#6D28D9" CornerRadius="4" Margin="0,0,8,0" Visibility="Collapsed">
-                                <Button x:Name="BtnEditProduct" Click="BtnEditProduct_Click" Padding="12,6"
-                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
-                                        FontSize="12" BorderThickness="0" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Edit Product" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </Border>
-                            <!-- Delete -->
-                            <Border x:Name="BtnDeleteProductBorder" Background="#DC2626" CornerRadius="4" Visibility="Collapsed">
-                                <Button x:Name="BtnDeleteProduct" Click="BtnDeleteProduct_Click" Padding="12,6"
-                                        Background="Transparent" Foreground="White" FontWeight="SemiBold"
-                                        FontSize="12" BorderThickness="0" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Delete" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </Border>
-                            <!-- Back -->
-                            <Button Click="BtnBackToList_Click" Padding="12,6" Margin="8,0,0,0"
-                                    Background="Transparent" Foreground="#6B7280" FontSize="12"
-                                    BorderBrush="#D1D5DB" BorderThickness="1" Cursor="Hand">
+                            <!-- Product actions are grouped apart from Back; tooltips identify icon-only buttons. -->
+                            <Border x:Name="ProductActionGroup" Background="#F8FAFC" BorderBrush="#E2E8F0"
+                                    BorderThickness="1" CornerRadius="8" Padding="4" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72B;" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Back" VerticalAlignment="Center"/>
+                                    <Button x:Name="BtnUploadDoc" Click="BtnUploadDoc_Click"
+                                            Style="{StaticResource ProductActionIconButtonStyle}"
+                                            Background="#ECFDF5" BorderBrush="#A7F3D0" Foreground="#047857"
+                                            ToolTip="Upload document" AutomationProperties.Name="Upload document"
+                                            Margin="0,0,5,0">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE898;" FontSize="14"/>
+                                    </Button>
+                                    <Button x:Name="BtnEditProduct" Click="BtnEditProduct_Click"
+                                            Style="{StaticResource ProductActionIconButtonStyle}"
+                                            Background="#F5F3FF" BorderBrush="#DDD6FE" Foreground="#6D28D9"
+                                            ToolTip="Edit product" AutomationProperties.Name="Edit product"
+                                            Margin="0,0,5,0">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="14"/>
+                                    </Button>
+                                    <Button x:Name="BtnDeleteProduct" Click="BtnDeleteProduct_Click"
+                                            Style="{StaticResource ProductActionIconButtonStyle}"
+                                            Background="#FEF2F2" BorderBrush="#FECACA" Foreground="#B91C1C"
+                                            ToolTip="Delete product" AutomationProperties.Name="Delete product">
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="14"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="1" Height="22" Background="#CBD5E1" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            <!-- Back -->
+                            <Button Click="BtnBackToList_Click" Padding="12,0" Margin="10,0,0,0"
+                                    Height="34" Background="White" Foreground="#475569" FontSize="12"
+                                    BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" ToolTip="Back to product list">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72B;" FontSize="12" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                    <TextBlock Text="Back" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -685,95 +747,86 @@
                                 <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                                     <StackPanel>
                                         <TextBlock Text="SPECIFICATIONS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,12"/>
-
-                                        <!-- Dimensions -->
                                         <TextBlock Text="Dimensions (mm)" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Length" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecLength" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecLenTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecLength" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecLenTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Width" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecWidth" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecWidTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecWidth" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecWidTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
                                         <Grid Margin="0,0,0,12">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Height" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecHeight" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecHgtTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecHeight" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecHgtTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
 
-                                        <!-- Electrical -->
                                         <TextBlock Text="Electrical" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Inductance" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecInductance" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecIndTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Inductance" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="SpecInductance" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIndTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Isat" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecIsaat" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecIsaatTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIsaat" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecIsaatTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="72"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="48"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="DCR" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecDcr" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"/>
-                                            <TextBlock Text="± Tol" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="SpecDcrTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecDcr" Grid.Column="1" FontSize="12" Foreground="#111827" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <TextBlock Text="± Tol" Grid.Column="3" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="SpecDcrTol" Grid.Column="4" FontSize="12" Foreground="#6D28D9" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -781,7 +834,7 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- RIGHT PANEL: Tabs (Process / Documents / Materials) -->
+                        <!-- RIGHT PANEL: Tabs (Process / Documents) -->
                         <Grid Grid.Column="2">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -879,6 +932,8 @@
                                                                     <TextBlock Text=" · " FontSize="11" Foreground="#9CA3AF"/>
                                                                     <TextBlock Text="{Binding UploadedBy}" FontSize="11" Foreground="#6B7280"/>
                                                                 </StackPanel>
+                                                                <TextBlock Text="{Binding ProcessScope, StringFormat='Applies to: {0}'}"
+                                                                           FontSize="10" Foreground="#7C3AED" Margin="0,3,0,0"/>
                                                             </StackPanel>
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <Button Click="BtnOpenDoc_Click" Background="Transparent" BorderThickness="0"
@@ -901,32 +956,6 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-
-                                        <Separator Margin="0,16" Background="#E5E7EB"/>
-
-                                        <!-- Materials Section -->
-                                        <TextBlock Text="BILL OF MATERIALS" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,10"/>
-                                        <DataGrid x:Name="DetailMaterialList" AutoGenerateColumns="False"
-                                                  IsReadOnly="True" GridLinesVisibility="None"
-                                                  HeadersVisibility="Column" RowHeight="28"
-                                                  Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
-                                                  ColumnHeaderHeight="28" SelectionMode="Single">
-                                            <DataGrid.ColumnHeaderStyle>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="Background" Value="#F9FAFB"/>
-                                                    <Setter Property="Foreground" Value="#374151"/>
-                                                    <Setter Property="FontSize" Value="11"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Padding" Value="8,0"/>
-                                                    <Setter Property="BorderBrush" Value="#E5E7EB"/>
-                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                                </Style>
-                                            </DataGrid.ColumnHeaderStyle>
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Part Number" Binding="{Binding PartNumber}" Width="130" FontWeight="SemiBold"/>
-                                                <DataGridTextColumn Header="Part Name" Binding="{Binding PartName}" Width="*"/>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
 
                                     </StackPanel>
                                 </ScrollViewer>
@@ -958,7 +987,7 @@
                     <Grid Grid.Row="1" Margin="0,0,0,14">
                         <StackPanel>
                             <TextBlock Text="Material Inventory" FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
-                            <TextBlock Text="Manage material inventory linked to product part numbers from the Product Dashboard"
+                            <TextBlock Text="Browse and manage material inventory and stock lots"
                                        Foreground="#64748B" FontSize="12" Margin="0,2,0,0"/>
                         </StackPanel>
 
@@ -976,13 +1005,13 @@
                     </Grid>
 
                     <!-- KPI Stat Cards -->
-                    <Grid Grid.Row="2" Margin="0,0,0,14">
+                    <Grid Grid.Row="2" MinHeight="174" Margin="0,0,0,14">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="175"/>
                             <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="175"/>
                             <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="12"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -991,7 +1020,7 @@
                         <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
                             <StackPanel>
                                 <TextBlock Text="TOTAL MATERIAL ITEMS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                                <TextBlock x:Name="TxtStatTotalItems" Text="0" FontSize="20" FontWeight="Bold" Foreground="#1E0734" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="TxtStatTotalItems" Text="0" FontSize="20" FontWeight="SemiBold" Foreground="#1E0734" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
 
@@ -999,24 +1028,42 @@
                         <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
                             <StackPanel>
                                 <TextBlock Text="TOTAL STOCK QUANTITY" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                                <TextBlock x:Name="TxtStatTotalQty" Text="0" FontSize="20" FontWeight="Bold" Foreground="#0D9488" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="TxtStatTotalQty" Text="0" FontSize="20" FontWeight="SemiBold" Foreground="#0D9488" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Card 3: Active Lots -->
+                        <!-- Card 3: Today's usage -->
                         <Border Grid.Column="4" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
                             <StackPanel>
-                                <TextBlock Text="ACTIVE LOTS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                                <TextBlock x:Name="TxtStatTotalLots" Text="0" FontSize="20" FontWeight="Bold" Foreground="#6D28D9" Margin="0,4,0,0"/>
+                                <TextBlock Text="MATERIAL USED TODAY" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatUsageToday" Text="0" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="#6D28D9" Margin="0,4,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Card 4: Locations -->
-                        <Border Grid.Column="6" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
-                            <StackPanel>
-                                <TextBlock Text="STORAGE LOCATIONS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                                <TextBlock x:Name="TxtStatTotalLocations" Text="0" FontSize="20" FontWeight="Bold" Foreground="#D97706" Margin="0,4,0,0"/>
-                            </StackPanel>
+                        <!-- Material usage line chart -->
+                        <Border Grid.Column="6" Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                                CornerRadius="6" Padding="12,8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <TextBlock Text="MATERIAL USAGE TREND" FontSize="10" FontWeight="Bold"
+                                               Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button x:Name="BtnUsageDay" Content="Day" Tag="Day" Click="UsagePeriod_Click" Padding="8,2" Margin="0,0,3,0"
+                                                Background="#F3E8FF" Foreground="#6D28D9" BorderThickness="0" Cursor="Hand"/>
+                                        <Button x:Name="BtnUsageWeek" Content="Week" Tag="Week" Click="UsagePeriod_Click" Padding="8,2" Margin="0,0,3,0"
+                                                Background="Transparent" Foreground="#64748B" BorderThickness="0" Cursor="Hand"/>
+                                        <Button x:Name="BtnUsageMonth" Content="Month" Tag="Month" Click="UsagePeriod_Click" Padding="8,2"
+                                                Background="Transparent" Foreground="#64748B" BorderThickness="0" Cursor="Hand"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Canvas x:Name="UsageChartCanvas" Grid.Row="1" Margin="0,6,0,0"
+                                        SizeChanged="UsageChartCanvas_SizeChanged" ClipToBounds="True"/>
+                            </Grid>
                         </Border>
                     </Grid>
 
@@ -1073,6 +1120,14 @@
                                 <ComboBox x:Name="CmbFilterMaterialLot" Width="110" Height="30" Margin="0,0,10,0"
                                           FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
                                     <ComboBoxItem Content="All Lots" IsSelected="True"/>
+                                </ComboBox>
+                                <ComboBox x:Name="CmbFilterMaterialProduct" Width="135" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Products" IsSelected="True"/>
+                                </ComboBox>
+                                <ComboBox x:Name="CmbFilterMaterialFamily" Width="150" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center" SelectionChanged="MaterialFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Product Families" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
 
@@ -1182,6 +1237,9 @@
                                     <!-- Item Code -->
                                     <DataGridTextColumn Header="Item Code" Binding="{Binding ItemCode}" Width="105"/>
 
+                                    <DataGridTextColumn Header="PN Product" Binding="{Binding ProductPartNumber}" Width="115"/>
+                                    <DataGridTextColumn Header="P Family" Binding="{Binding ProductFamily}" Width="145"/>
+
                                     <!-- UoM -->
                                     <DataGridTextColumn Header="UoM" Binding="{Binding UoM}" Width="70"/>
 
@@ -1209,7 +1267,8 @@
                                     <DataGridTemplateColumn Header="Qty" Width="85">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Qty, StringFormat='{}{0:N0}'}" FontWeight="Bold" Foreground="#0D9488"
+                                                <TextBlock Text="{Binding AvailableQty, Converter={StaticResource StockQuantityDisplayConverter}}" FontWeight="Bold"
+                                                           Foreground="{Binding AvailableQty, Converter={StaticResource LowStockForegroundConverter}}"
                                                            HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -1222,7 +1281,17 @@
                                     <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="160"/>
 
                                     <!-- Actions (Edit / Delete) -->
-                                    <DataGridTemplateColumn Header="Actions" Width="80">
+                                    <DataGridTemplateColumn x:Name="StoreMaterialRequestColumn" Header="Request" Width="68">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Click="BtnRequestMaterialUsage_Click" Background="Transparent" BorderThickness="0"
+                                                        Cursor="Hand" ToolTip="Request material usage" Padding="4,2">
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8FA;" FontSize="13" Foreground="#0D9488"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn x:Name="StoreMaterialActionsColumn" Header="Actions" Width="80">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -1248,20 +1317,443 @@
                                            FontSize="36" Foreground="#B0B0B0" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                                 <TextBlock Text="No material records found" FontSize="15" FontWeight="SemiBold" 
                                            Foreground="#666666" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Try adjusting filters or add a new material record" 
+                                <TextBlock Text="Try adjusting the filters or ask a Store Manager to add a material record"
                                            FontSize="12" Foreground="#999999" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>
 
-                <!-- TOOLING VIEW -->
-                <Grid x:Name="ViewTooling" Visibility="Collapsed">
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE946;" FontSize="64" Foreground="#B0B0B0" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                        <TextBlock Text="Tooling Module" FontSize="24" FontWeight="SemiBold" Foreground="#334155" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                        <TextBlock Text="This module is currently under development." FontSize="14" Foreground="#64748B" HorizontalAlignment="Center"/>
+                <!-- USAGE HISTORY VIEW -->
+                <Grid x:Name="ViewUsageHistory" Visibility="Collapsed" Margin="16,14,16,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="Usage Request History" FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
+                        <TextBlock x:Name="TxtUsageHistorySubtitle" Text="Track material and tooling requests, issues, and returns"
+                                   FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                     </StackPanel>
+                    <Border Grid.Row="3" Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                            CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Source" VerticalAlignment="Center" Foreground="#475569" Margin="0,0,6,0"/>
+                            <ComboBox x:Name="CmbHistoryType" Width="130" Height="30" Margin="0,0,14,0"
+                                      SelectionChanged="UsageHistoryFilter_SelectionChanged">
+                                <ComboBoxItem Content="All" IsSelected="True"/>
+                                <ComboBoxItem Content="Material"/>
+                                <ComboBoxItem Content="Tooling"/>
+                            </ComboBox>
+                            <TextBlock Text="Request date" VerticalAlignment="Center" Foreground="#475569" Margin="0,0,6,0"/>
+                            <ComboBox x:Name="CmbHistoryDateRange" Width="145" Height="30" Margin="0,0,10,0"
+                                      SelectionChanged="UsageHistoryFilter_SelectionChanged">
+                                <ComboBoxItem Content="All dates" IsSelected="True"/>
+                                <ComboBoxItem Content="Today"/>
+                                <ComboBoxItem Content="Yesterday"/>
+                                <ComboBoxItem Content="Custom range"/>
+                            </ComboBox>
+                            <DatePicker x:Name="DpHistoryFrom" Width="135" Height="30" Margin="0,0,6,0"
+                                        Visibility="Collapsed" SelectedDateChanged="UsageHistoryDate_Changed"/>
+                            <TextBlock x:Name="TxtHistoryDateSeparator" Text="to" VerticalAlignment="Center"
+                                       Foreground="#64748B" Margin="0,0,6,0" Visibility="Collapsed"/>
+                            <DatePicker x:Name="DpHistoryTo" Width="135" Height="30" Margin="0,0,8,0"
+                                        Visibility="Collapsed" SelectedDateChanged="UsageHistoryDate_Changed"/>
+                            <Button Content="Clear" Click="BtnClearUsageHistoryFilters_Click"
+                                    Background="Transparent" Foreground="#6D28D9"
+                                    BorderThickness="0" Cursor="Hand" Padding="8,4"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="2" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1"
+                            CornerRadius="6" Padding="10,7" Margin="0,0,0,10">
+                        <TextBlock x:Name="TxtPendingUsageNotice" Foreground="#9A3412" FontSize="11" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Grid.Row="3" Background="White" BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="4">
+                        <Grid>
+                            <DataGrid x:Name="GridUsageRequests" AutoGenerateColumns="False" IsReadOnly="True"
+                                      GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="38"
+                                      Background="White" BorderThickness="0" ColumnHeaderHeight="32"
+                                      SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Request Date" Binding="{Binding RequestedAtLocal, StringFormat='{}{0:dd MMM yyyy HH:mm}'}" Width="145"/>
+                                <DataGridTextColumn Header="Source" Binding="{Binding ItemType}" Width="90"/>
+                                <DataGridTextColumn Header="Part Number" Binding="{Binding PartNumber}" Width="115" FontWeight="SemiBold"/>
+                                <DataGridTextColumn Header="Description" Binding="{Binding ItemDescription}" Width="2*" MinWidth="140"/>
+                                <DataGridTextColumn Header="Lot" Binding="{Binding Lot}" Width="90"/>
+                                <DataGridTextColumn Header="Requested" Binding="{Binding RequestedQty, StringFormat='{}{0:N2}'}" Width="82"/>
+                                <DataGridTextColumn Header="Returned" Binding="{Binding ReturnedQty, StringFormat='{}{0:N2}'}" Width="82"/>
+                                <DataGridTextColumn Header="Used" Binding="{Binding UsedQty, StringFormat='{}{0:N2}'}" Width="72"/>
+                                <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="2*" MinWidth="110"/>
+                                <DataGridTextColumn Header="Requested By" Binding="{Binding RequestedBy}" Width="110"/>
+                                <DataGridTextColumn Header="Confirmed By" Binding="{Binding ConfirmedBy}" Width="110"/>
+                                <DataGridTextColumn Header="Returned By" Binding="{Binding ReturnedBy}" Width="110"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="82"/>
+                                <DataGridTemplateColumn x:Name="UsageRequestActionsColumn" Header="Actions" Width="125">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Confirm" Click="BtnConfirmUsageRequest_Click" Padding="6,3"
+                                                        Margin="0,0,4,0" Background="#6D28D9" Foreground="White"
+                                                        BorderThickness="0" Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding Status}" Value="Pending"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=Tag}" Value="Store"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </MultiDataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="Return" Click="BtnCompleteUsageRequest_Click" Padding="6,3"
+                                                        Background="#0D9488" Foreground="White" BorderThickness="0" Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding Status}" Value="Issued"/>
+                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=Tag}" Value="Rd"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </MultiDataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel x:Name="UsageHistoryEmptyState" Visibility="Collapsed"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8C3;" FontSize="34"
+                                           Foreground="#CBD5E1" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                <TextBlock Text="Belum ada data request pada filter ini"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#64748B"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- TOOLING VIEW -->
+                <Grid x:Name="ViewTooling" Visibility="Collapsed" Margin="16,14,16,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Dashboard" Foreground="#666666" FontSize="11"/>
+                        <TextBlock Text=" &gt; " Foreground="#888888" FontSize="11"/>
+                        <TextBlock Text="Store" Foreground="#666666" FontSize="11"/>
+                        <TextBlock Text=" &gt; " Foreground="#888888" FontSize="11"/>
+                        <TextBlock Text="Tooling Inventory" Foreground="#222222" FontSize="11" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Tooling Inventory" FontSize="18" FontWeight="Bold" Foreground="#1E0734"/>
+                            <TextBlock Text="Manage tooling stock and usage requests"
+                                       FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Border x:Name="BtnAddToolingBorder" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Background="#6D28D9" CornerRadius="6" Visibility="Collapsed">
+                            <Button Click="BtnAddTooling_Click" Content="+ Add Tooling" Padding="14,8"
+                                    Background="Transparent" Foreground="White" FontWeight="Bold"
+                                    FontSize="12" BorderThickness="0" Cursor="Hand"/>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="2" MinHeight="174" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="175"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="175"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL TOOLING ITEMS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalToolingItems" Text="0" FontSize="20" FontWeight="SemiBold"
+                                           Foreground="#1E0734" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL STOCK QUANTITY" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatTotalToolingQty" Text="0" FontSize="20" FontWeight="SemiBold"
+                                           Foreground="#0D9488" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="4" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                            <StackPanel>
+                                <TextBlock Text="TOOLING USED TODAY" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                                <TextBlock x:Name="TxtStatToolingUsageToday" Text="0" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="#6D28D9" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="6" Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                                CornerRadius="6" Padding="12,8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <TextBlock Text="TOOLING USAGE TREND" FontSize="10" FontWeight="Bold"
+                                               Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button x:Name="BtnToolingUsageDay" Content="Day" Tag="Day"
+                                                Click="ToolingUsagePeriod_Click" Padding="8,2" Margin="0,0,3,0"
+                                                Background="#F3E8FF" Foreground="#6D28D9" BorderThickness="0" Cursor="Hand"/>
+                                        <Button x:Name="BtnToolingUsageWeek" Content="Week" Tag="Week"
+                                                Click="ToolingUsagePeriod_Click" Padding="8,2" Margin="0,0,3,0"
+                                                Background="Transparent" Foreground="#64748B" BorderThickness="0" Cursor="Hand"/>
+                                        <Button x:Name="BtnToolingUsageMonth" Content="Month" Tag="Month"
+                                                Click="ToolingUsagePeriod_Click" Padding="8,2"
+                                                Background="Transparent" Foreground="#64748B" BorderThickness="0" Cursor="Hand"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Canvas x:Name="ToolingUsageChartCanvas" Grid.Row="1" Margin="0,6,0,0"
+                                        SizeChanged="ToolingUsageChartCanvas_SizeChanged" ClipToBounds="True"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <Border Grid.Row="3" Background="White" BorderBrush="#DCDCDC" BorderThickness="1"
+                            CornerRadius="4" Padding="12,8" Margin="0,0,0,12">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4"
+                                        Background="#F8FAFC" Width="240" Height="30" Margin="0,0,12,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE721;"
+                                                   Foreground="#64748B" FontSize="11"
+                                                   Margin="8,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtSearchToolingInput" Grid.Column="1" Text=""
+                                                 Foreground="#1E0734" FontSize="11"
+                                                 VerticalContentAlignment="Center" Padding="0,0,8,0"
+                                                 BorderThickness="0" Background="Transparent"
+                                                 KeyUp="ToolingSearch_KeyUp">
+                                            <TextBox.Style>
+                                                <Style TargetType="TextBox">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Text" Value="">
+                                                            <Setter Property="Background">
+                                                                <Setter.Value>
+                                                                    <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                                                                        <VisualBrush.Visual>
+                                                                            <TextBlock Text="Search Part No, Description, Lot, Location..."
+                                                                                       Foreground="#94A3B8" FontSize="11" Margin="2,0,0,0"/>
+                                                                        </VisualBrush.Visual>
+                                                                    </VisualBrush>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBox.Style>
+                                        </TextBox>
+                                    </Grid>
+                                </Border>
+                                <ComboBox x:Name="CmbFilterToolingPartNumber" Width="140" Height="30" Margin="0,0,14,0"
+                                          FontSize="11" VerticalContentAlignment="Center"
+                                          SelectionChanged="ToolingFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Part Numbers" IsSelected="True"/>
+                                </ComboBox>
+                                <ComboBox x:Name="CmbFilterToolingLot" Width="110" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center"
+                                          SelectionChanged="ToolingFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Lots" IsSelected="True"/>
+                                </ComboBox>
+                                <ComboBox x:Name="CmbFilterToolingProduct" Width="135" Height="30" Margin="0,0,10,0"
+                                          FontSize="11" VerticalContentAlignment="Center"
+                                          SelectionChanged="ToolingFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Products" IsSelected="True"/>
+                                </ComboBox>
+                                <ComboBox x:Name="CmbFilterToolingFamily" Width="150" Height="30"
+                                          FontSize="11" VerticalContentAlignment="Center"
+                                          SelectionChanged="ToolingFilter_SelectionChanged">
+                                    <ComboBoxItem Content="All Product Families" IsSelected="True"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <Button Content="Clear Filters" Click="BtnClearToolingFilters_Click"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Background="Transparent" Foreground="#6D28D9" FontWeight="SemiBold"
+                                    FontSize="12" BorderThickness="0" Cursor="Hand"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="4" Background="White" BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="4">
+                        <Grid>
+                            <DataGrid x:Name="GridToolings" AutoGenerateColumns="False" IsReadOnly="True"
+                                      GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="32"
+                                      Background="White" BorderThickness="0" ColumnHeaderHeight="32"
+                                      SelectionMode="Single" CanUserAddRows="False"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      MouseDoubleClick="GridToolings_MouseDoubleClick">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#F6F6F6"/>
+                                        <Setter Property="Foreground" Value="#1E0734"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,0,8,0"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="BorderBrush" Value="#EAEAEA"/>
+                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#F3E8FF"/>
+                                                <Setter Property="BorderBrush" Value="#D8B4FE"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FAF5FF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding" Value="8,0,8,0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="Transparent" BorderThickness="0"
+                                                            Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#111827"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Part Number" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ToolingCode}" Foreground="#6D28D9"
+                                                           FontWeight="Bold" FontSize="12"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Entry Date" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding EntryDate, StringFormat='{}{0:dd MMM yyyy}'}"
+                                                           FontSize="12" Foreground="#475569"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Item Description" Binding="{Binding ToolingName}"
+                                                        Width="2*" MinWidth="180" FontWeight="SemiBold"/>
+                                    <DataGridTextColumn Header="Item Code" Binding="{Binding ItemCode}" Width="105"/>
+                                    <DataGridTextColumn Header="PN Product" Binding="{Binding ProductPartNumber}" Width="115"/>
+                                    <DataGridTextColumn Header="P Family" Binding="{Binding ProductFamily}" Width="145"/>
+                                    <DataGridTextColumn Header="UoM" Binding="{Binding UoM}" Width="70"/>
+                                    <DataGridTemplateColumn Header="Lot" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Lot}" FontFamily="Consolas" FontSize="11"
+                                                           Foreground="#0F172A"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Location" Width="105">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,2"
+                                                        HorizontalAlignment="Left">
+                                                    <TextBlock Text="{Binding Location}" FontSize="11"
+                                                               FontWeight="SemiBold" Foreground="#334155"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Qty" Width="85">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding AvailableQty, Converter={StaticResource StockQuantityDisplayConverter}}"
+                                                           FontWeight="Bold"
+                                                           Foreground="{Binding AvailableQty, Converter={StaticResource LowStockForegroundConverter}}"
+                                                           HorizontalAlignment="Right" FontSize="12"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Package" Binding="{Binding Package}" Width="100"/>
+                                    <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="160"/>
+                                    <DataGridTemplateColumn x:Name="ToolingRequestColumn" Header="Request" Width="68">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Click="BtnRequestToolingUsage_Click" Background="Transparent" BorderThickness="0"
+                                                        Cursor="Hand" ToolTip="Request tooling usage" Padding="4,2">
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8FA;" FontSize="13" Foreground="#0D9488"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn x:Name="ToolingActionsColumn" Header="Actions" Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Click="BtnEditTooling_Click" Background="Transparent" BorderThickness="0"
+                                                            Cursor="Hand" ToolTip="Edit Tooling" Padding="4,2" Margin="0,0,4,0">
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="12" Foreground="#6D28D9"/>
+                                                    </Button>
+                                                    <Button Click="BtnDeleteTooling_Click" Background="Transparent" BorderThickness="0"
+                                                            Cursor="Hand" ToolTip="Delete Tooling" Padding="4,2">
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="12" Foreground="#DC2626"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel x:Name="ToolingEmptyState" Visibility="Collapsed"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="No tooling records found" FontSize="14" FontWeight="SemiBold" Foreground="#64748B"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
 
 

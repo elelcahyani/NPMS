@@ -57,6 +57,13 @@ namespace NPMS.Desktop
             var dlg = new AddUserDialog(roles) { Owner = this };
             if (dlg.ShowDialog() != true) return;
 
+            if (_db.Users.Any(user => user.Username.ToLower() == dlg.NewUsername.ToLower()))
+            {
+                MessageBox.Show("Username tersebut sudah digunakan.", "Invalid Username",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var newUser = new User
             {
                 Username = dlg.NewUsername,
@@ -72,7 +79,7 @@ namespace NPMS.Desktop
         private void BtnChangeUserPwd_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button btn || btn.DataContext is not UserViewModel vm) return;
-            var dlg = new ChangePasswordWindow(_service, vm.UserId) { Owner = this };
+            var dlg = new ChangePasswordWindow(_service, vm.UserId, vm.Username) { Owner = this };
             dlg.ShowDialog();
         }
 
@@ -91,6 +98,9 @@ namespace NPMS.Desktop
                 return;
             }
 
+            var user = _db.Users.FirstOrDefault(u => u.UserId == vm.UserId);
+            if (user == null) return;
+
             var duplicate = _db.Users.Any(u =>
                 u.UserId != vm.UserId &&
                 u.Username.ToLower() == dlg.EditedUsername.ToLower());
@@ -101,8 +111,12 @@ namespace NPMS.Desktop
                 return;
             }
 
-            var user = _db.Users.FirstOrDefault(u => u.UserId == vm.UserId);
-            if (user == null) return;
+            if (ProductService.VerifyPassword(dlg.EditedUsername, user.PasswordHash))
+            {
+                MessageBox.Show("Username dan password tidak boleh sama.", "Invalid Credentials",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             user.Username = dlg.EditedUsername;
             user.RoleId = dlg.SelectedRoleId;
@@ -112,7 +126,7 @@ namespace NPMS.Desktop
 
             if (dlg.ChangePasswordRequested)
             {
-                var passwordDialog = new ChangePasswordWindow(_service, vm.UserId) { Owner = this };
+                var passwordDialog = new ChangePasswordWindow(_service, vm.UserId, user.Username) { Owner = this };
                 passwordDialog.ShowDialog();
             }
         }

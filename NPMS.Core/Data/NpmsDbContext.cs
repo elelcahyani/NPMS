@@ -14,12 +14,13 @@ namespace NPMS.Core.Data
 
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<User> Users => Set<User>();
+        public DbSet<RegisteredPartNumber> RegisteredPartNumbers => Set<RegisteredPartNumber>();
         public DbSet<Product> Products => Set<Product>();
         public DbSet<ProductSpecification> ProductSpecifications => Set<ProductSpecification>();
-        public DbSet<ProductMaterial> ProductMaterials => Set<ProductMaterial>();
         public DbSet<ManufacturingInformation> ManufacturingInformations => Set<ManufacturingInformation>();
         public DbSet<Machine> Machines => Set<Machine>();
         public DbSet<Tooling> Toolings => Set<Tooling>();
+        public DbSet<UsageRequest> UsageRequests => Set<UsageRequest>();
         public DbSet<ProcessStep> Processes => Set<ProcessStep>();
         public DbSet<ProcessParameter> ProcessParameters => Set<ProcessParameter>();
         public DbSet<DocumentMetadata> Documents => Set<DocumentMetadata>();
@@ -31,20 +32,42 @@ namespace NPMS.Core.Data
 
             modelBuilder.Entity<Role>().HasKey(r => r.RoleId);
             modelBuilder.Entity<User>().HasKey(u => u.UserId);
+            modelBuilder.Entity<User>()
+                .Property(u => u.Username)
+                .UseCollation("NOCASE");
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique()
+                .HasDatabaseName("IX_Users_Username_NOCASE");
+            modelBuilder.Entity<RegisteredPartNumber>()
+                .Property(p => p.PartNumber)
+                .UseCollation("NOCASE");
             modelBuilder.Entity<Product>().HasKey(p => p.ProductId);
             modelBuilder.Entity<ProductSpecification>().HasKey(s => s.SpecificationId);
-            modelBuilder.Entity<ProductMaterial>().HasKey(m => m.MaterialId);
             modelBuilder.Entity<ManufacturingInformation>().HasKey(m => m.ManufacturingId);
             modelBuilder.Entity<Machine>().HasKey(mc => mc.MachineId);
             modelBuilder.Entity<Tooling>().HasKey(t => t.ToolingId);
+            modelBuilder.Entity<UsageRequest>().HasKey(r => r.RequestId);
             modelBuilder.Entity<ProcessStep>().HasKey(pr => pr.ProcessId);
             modelBuilder.Entity<ProcessParameter>().HasKey(pp => pp.ParameterId);
             modelBuilder.Entity<DocumentMetadata>().HasKey(d => d.DocumentId);
             modelBuilder.Entity<StoreMaterial>().HasKey(sm => sm.MaterialId);
 
             modelBuilder.Entity<Product>()
+                .Property(p => p.PartNumber)
+                .UseCollation("NOCASE");
+            modelBuilder.Entity<Product>()
                 .HasIndex(p => p.PartNumber)
-                .IsUnique();
+                .IsUnique()
+                .HasDatabaseName("IX_Products_PartNumber_NOCASE");
+
+            modelBuilder.Entity<Tooling>()
+                .Property(t => t.ToolingCode)
+                .UseCollation("NOCASE");
+            modelBuilder.Entity<Tooling>()
+                .HasIndex(t => t.ToolingCode)
+                .IsUnique()
+                .HasDatabaseName("IX_Toolings_ToolingCode_NOCASE");
 
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Specification)
@@ -65,12 +88,6 @@ namespace NPMS.Core.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Product>()
-                .HasMany(p => p.Materials)
-                .WithOne(m => m.Product)
-                .HasForeignKey(m => m.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Product>()
                 .HasMany(p => p.Documents)
                 .WithOne(d => d.Product)
                 .HasForeignKey(d => d.ProductId)
@@ -86,6 +103,32 @@ namespace NPMS.Core.Data
         public static void SeedDatabase(NpmsDbContext db)
         {
             db.Database.EnsureCreated();
+            EnsureDocumentProcessColumn(db);
+            EnsureToolingInventoryColumns(db);
+
+            db.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS UsageRequests (
+                    RequestId INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ItemType TEXT NOT NULL,
+                    InventoryId INTEGER NOT NULL,
+                    PartNumber TEXT NOT NULL,
+                    ItemDescription TEXT NOT NULL,
+                    Lot TEXT NOT NULL DEFAULT '',
+                    UoM TEXT NOT NULL DEFAULT 'PCS',
+                    RequestedQty REAL NOT NULL,
+                    ReturnedQty REAL NULL,
+                    Reason TEXT NOT NULL DEFAULT '',
+                    RequestedBy TEXT NOT NULL,
+                    RequestedAt TEXT NOT NULL,
+                    ConfirmedBy TEXT NULL,
+                    ConfirmedAt TEXT NULL,
+                    ReturnedBy TEXT NULL,
+                    ReturnedAt TEXT NULL,
+                    Status TEXT NOT NULL DEFAULT 'Pending'
+                )");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('UsageRequests') WHERE name = 'ReturnedBy'",
+                "ALTER TABLE UsageRequests ADD COLUMN ReturnedBy TEXT NULL");
 
             // Ensure StoreMaterials table exists even when DB was created before this entity was added
             db.Database.ExecuteSqlRaw(@"
@@ -96,6 +139,8 @@ namespace NPMS.Core.Data
                     ItemDescription TEXT NOT NULL DEFAULT '',
                     ItemCode     TEXT NOT NULL DEFAULT '',
                     UoM          TEXT NOT NULL DEFAULT 'PCS',
+                    ProductPartNumber TEXT NOT NULL DEFAULT '',
+                    ProductFamily TEXT NOT NULL DEFAULT '',
                     Lot          TEXT NOT NULL DEFAULT '',
                     Location     TEXT NOT NULL DEFAULT '',
                     Qty          REAL NOT NULL DEFAULT 0,
@@ -105,6 +150,22 @@ namespace NPMS.Core.Data
                     UpdatedAt    TEXT NOT NULL,
                     CreatedBy    TEXT NOT NULL DEFAULT ''
                 )");
+
+            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS ProductMaterials;");
+            db.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS RegisteredPartNumbers (
+                    PartNumber TEXT NOT NULL COLLATE NOCASE PRIMARY KEY,
+                    ItemType TEXT NOT NULL
+                )");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('StoreMaterials') WHERE name = 'ProductPartNumber'",
+                "ALTER TABLE StoreMaterials ADD COLUMN ProductPartNumber TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('StoreMaterials') WHERE name = 'ProductFamily'",
+                "ALTER TABLE StoreMaterials ADD COLUMN ProductFamily TEXT NOT NULL DEFAULT ''");
+            db.Database.ExecuteSqlRaw(@"
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_Username_NOCASE
+                ON Users (Username COLLATE NOCASE)");
 
             var initialSeed = !db.Roles.Any();
             var imgDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
@@ -153,7 +214,13 @@ namespace NPMS.Core.Data
             }
 
             if (!initialSeed)
+            {
+                LinkLegacyInventoryToProducts(db);
+                SeedSampleUsageRequests(db);
+                SyncRegisteredPartNumbers(db);
+                CreatePartNumberIndexes(db);
                 return;
+            }
 
 
             // Seed Machines & Toolings
@@ -162,9 +229,9 @@ namespace NPMS.Core.Data
             var m3 = new Machine { MachineName = "Molding Press M-07", MachineCode = "Machine-07" };
             var m4 = new Machine { MachineName = "AOI Inspector I-04", MachineCode = "MAC-INSP-04" };
 
-            var t1 = new Tooling { ToolingName = "Winding Spindle T-11", ToolingCode = "TOOL-W11" };
-            var t2 = new Tooling { ToolingName = "Soldering Fixture T-15", ToolingCode = "TOOL-S15" };
-            var t3 = new Tooling { ToolingName = "Molding Die T-23", ToolingCode = "Tool-23" };
+            var t1 = new Tooling { ToolingName = "Winding Spindle T-11", ToolingCode = "TOOL-W11", EntryDate = DateTime.Today.AddDays(-30), ItemCode = "ITM-W11", UoM = "PCS", Lot = "TOOL-LOT-001", Qty = 3, Location = "WH-T1-01", Package = "Protective Case", Remarks = "Winding line spare spindle.", ProductPartNumber = "PI-00125", ProductFamily = "Magnetic Components" };
+            var t2 = new Tooling { ToolingName = "Soldering Fixture T-15", ToolingCode = "TOOL-S15", EntryDate = DateTime.Today.AddDays(-20), ItemCode = "ITM-S15", UoM = "PCS", Lot = "TOOL-LOT-002", Qty = 5, Location = "WH-T1-02", Package = "Fixture Box", Remarks = "Soldering fixture, calibrated.", ProductPartNumber = "PI-00126", ProductFamily = "Magnetic Components" };
+            var t3 = new Tooling { ToolingName = "Molding Die T-23", ToolingCode = "Tool-23", EntryDate = DateTime.Today.AddDays(-15), ItemCode = "ITM-T23", UoM = "PCS", Lot = "TOOL-LOT-003", Qty = 2, Location = "WH-T2-01", Package = "Wooden Crate", Remarks = "Molding die for sensing product.", ProductPartNumber = "PI-00128", ProductFamily = "Sensing Components" };
 
             db.Machines.AddRange(m1, m2, m3, m4);
             db.Toolings.AddRange(t1, t2, t3);
@@ -432,17 +499,7 @@ namespace NPMS.Core.Data
                 new ProcessParameter { ProcessId = proc2.ProcessId, ParameterName = "Dwell Time", ParameterValue = "3.5", Unit = "s" }
             );
 
-            // Seed Product Materials for products
-            var mat1 = new ProductMaterial { ProductId = p1.ProductId, PartNumber = "MAT-COP-015", PartName = "Enameled Copper Wire 0.15mm" };
-            var mat2 = new ProductMaterial { ProductId = p1.ProductId, PartNumber = "MAT-FER-EE16", PartName = "Ferrite Core MnZn EE16" };
-            var mat3 = new ProductMaterial { ProductId = p2.ProductId, PartNumber = "MAT-EPO-BLK", PartName = "Epoxy Resin Black Encapsulant" };
-            var mat4 = new ProductMaterial { ProductId = p2.ProductId, PartNumber = "MAT-TIN-SAC305", PartName = "Lead-Free Solder Bar SAC305" };
-            var mat5 = new ProductMaterial { ProductId = p3.ProductId, PartNumber = "MAT-BOB-RM6", PartName = "Bobbin Thermoplastic RM6 6-Pin" };
-
-            db.ProductMaterials.AddRange(mat1, mat2, mat3, mat4, mat5);
-            db.SaveChanges();
-
-            // Seed Store Materials (linked to material part numbers in product dashboard)
+            // Seed store inventory independently from product specifications
             db.StoreMaterials.AddRange(
                 new StoreMaterial
                 {
@@ -606,7 +663,271 @@ namespace NPMS.Core.Data
                 }
             );
 
+            var materialProductLinks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["MAT-COP-015"] = "PI-00125",
+                ["MAT-FER-EE16"] = "PI-00126",
+                ["MAT-EPO-BLK"] = "PI-00127",
+                ["MAT-TIN-SAC305"] = "PI-00128",
+                ["MAT-BOB-RM6"] = "PI-00129"
+            };
+            foreach (var material in db.StoreMaterials.Local)
+            {
+                if (!materialProductLinks.TryGetValue(material.PartNumber, out var productPartNumber))
+                    continue;
+                var product = db.Products.First(item => item.PartNumber == productPartNumber);
+                material.ProductPartNumber = product.PartNumber;
+                material.ProductFamily = product.ProductFamily;
+            }
+
             db.SaveChanges();
+            LinkLegacyInventoryToProducts(db);
+            SeedSampleUsageRequests(db);
+            SyncRegisteredPartNumbers(db);
+            CreatePartNumberIndexes(db);
+        }
+
+        private static void LinkLegacyInventoryToProducts(NpmsDbContext db)
+        {
+            db.Database.ExecuteSqlRaw(@"
+                UPDATE StoreMaterials
+                SET ProductPartNumber = CASE PartNumber
+                    WHEN 'MAT-COP-015' THEN 'PI-00125'
+                    WHEN 'MAT-FER-EE16' THEN 'PI-00126'
+                    WHEN 'MAT-EPO-BLK' THEN 'PI-00127'
+                    WHEN 'MAT-TIN-SAC305' THEN 'PI-00128'
+                    WHEN 'MAT-BOB-RM6' THEN 'PI-00129'
+                    ELSE ProductPartNumber
+                END
+                WHERE ProductPartNumber = '' AND PartNumber IN
+                    ('MAT-COP-015', 'MAT-FER-EE16', 'MAT-EPO-BLK', 'MAT-TIN-SAC305', 'MAT-BOB-RM6')");
+            db.Database.ExecuteSqlRaw(@"
+                UPDATE StoreMaterials
+                SET ProductFamily = (
+                    SELECT ProductFamily FROM Products
+                    WHERE Products.PartNumber = StoreMaterials.ProductPartNumber
+                )
+                WHERE ProductFamily = '' AND ProductPartNumber <> ''");
+            db.Database.ExecuteSqlRaw(@"
+                UPDATE Toolings
+                SET ProductPartNumber = CASE ToolingCode
+                    WHEN 'TOOL-W11' THEN 'PI-00125'
+                    WHEN 'TOOL-S15' THEN 'PI-00126'
+                    WHEN 'TOOL-23' THEN 'PI-00128'
+                    ELSE ProductPartNumber
+                END
+                WHERE ProductPartNumber = '' AND ToolingCode IN ('TOOL-W11', 'TOOL-S15', 'TOOL-23')");
+            db.Database.ExecuteSqlRaw(@"
+                UPDATE Toolings
+                SET ProductFamily = (
+                    SELECT ProductFamily FROM Products
+                    WHERE Products.PartNumber = Toolings.ProductPartNumber
+                )
+                WHERE ProductFamily = '' AND ProductPartNumber <> ''");
+            db.Database.ExecuteSqlRaw(@"
+                UPDATE Toolings
+                SET
+                    EntryDate = CASE UPPER(ToolingCode)
+                        WHEN 'TOOL-W11' THEN date('now', '-30 days')
+                        WHEN 'TOOL-S15' THEN date('now', '-20 days')
+                        WHEN 'TOOL-23' THEN date('now', '-15 days')
+                        ELSE EntryDate
+                    END,
+                    ItemCode = CASE UPPER(ToolingCode)
+                        WHEN 'TOOL-W11' THEN 'ITM-W11'
+                        WHEN 'TOOL-S15' THEN 'ITM-S15'
+                        WHEN 'TOOL-23' THEN 'ITM-T23'
+                        ELSE ItemCode
+                    END,
+                    Lot = CASE UPPER(ToolingCode)
+                        WHEN 'TOOL-W11' THEN 'TOOL-LOT-001'
+                        WHEN 'TOOL-S15' THEN 'TOOL-LOT-002'
+                        WHEN 'TOOL-23' THEN 'TOOL-LOT-003'
+                        ELSE Lot
+                    END,
+                    Package = CASE UPPER(ToolingCode)
+                        WHEN 'TOOL-W11' THEN 'Protective Case'
+                        WHEN 'TOOL-S15' THEN 'Fixture Box'
+                        WHEN 'TOOL-23' THEN 'Wooden Crate'
+                        ELSE Package
+                    END,
+                    Qty = CASE WHEN Qty <= 0 THEN CASE UPPER(ToolingCode)
+                        WHEN 'TOOL-W11' THEN 3
+                        WHEN 'TOOL-S15' THEN 5
+                        WHEN 'TOOL-23' THEN 2
+                        ELSE Qty
+                    END ELSE Qty END
+                WHERE UPPER(ToolingCode) IN ('TOOL-W11', 'TOOL-S15', 'TOOL-23')");
+        }
+
+        private static void SeedSampleUsageRequests(NpmsDbContext db)
+        {
+            var sampleMaterial = db.StoreMaterials
+                .OrderBy(material => material.MaterialId)
+                .FirstOrDefault(material => material.Qty >= 2);
+            var sampleTooling = db.Toolings
+                .OrderBy(tooling => tooling.ToolingId)
+                .FirstOrDefault(tooling => tooling.Qty >= 1);
+            var requestedAt = DateTime.UtcNow;
+            var addedSample = false;
+            if (sampleMaterial != null && !db.UsageRequests.Any(request => request.ItemType == "Material"))
+            {
+                db.UsageRequests.Add(new UsageRequest
+                {
+                    ItemType = "Material",
+                    InventoryId = sampleMaterial.MaterialId,
+                    PartNumber = sampleMaterial.PartNumber,
+                    ItemDescription = sampleMaterial.ItemDescription,
+                    Lot = sampleMaterial.Lot,
+                    UoM = sampleMaterial.UoM,
+                    RequestedQty = 2,
+                    Reason = "Sample request: prototype build material.",
+                    RequestedBy = "rd_user",
+                    RequestedAt = requestedAt,
+                    Status = "Pending"
+                });
+                addedSample = true;
+            }
+            if (sampleTooling != null && !db.UsageRequests.Any(request => request.ItemType == "Tooling"))
+            {
+                db.UsageRequests.Add(new UsageRequest
+                {
+                    ItemType = "Tooling",
+                    InventoryId = sampleTooling.ToolingId,
+                    PartNumber = sampleTooling.ToolingCode,
+                    ItemDescription = sampleTooling.ToolingName,
+                    Lot = sampleTooling.Lot,
+                    UoM = sampleTooling.UoM,
+                    RequestedQty = 1,
+                    Reason = "Sample request: setup tooling for pilot run.",
+                    RequestedBy = "rd_user",
+                    RequestedAt = requestedAt,
+                    Status = "Pending"
+                });
+                addedSample = true;
+            }
+            if (addedSample)
+                db.SaveChanges();
+        }
+
+        private static void SyncRegisteredPartNumbers(NpmsDbContext db)
+        {
+            var duplicateProductNumber = db.Products
+                .AsEnumerable()
+                .GroupBy(product => product.PartNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicateProductNumber != null)
+                throw new InvalidOperationException(
+                    $"Product Part Number '{duplicateProductNumber.Key}' is assigned to more than one product.");
+
+            var duplicateToolingNumber = db.Toolings
+                .AsEnumerable()
+                .GroupBy(tooling => tooling.ToolingCode.Trim(), StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicateToolingNumber != null)
+                throw new InvalidOperationException(
+                    $"Tooling Part Number '{duplicateToolingNumber.Key}' is assigned to more than one tooling item.");
+
+            var codes = db.Products
+                .Select(p => new { p.PartNumber, ItemType = "Product" })
+                .AsEnumerable()
+                .Concat(db.Toolings.Select(t => new { PartNumber = t.ToolingCode, ItemType = "Tooling" }).AsEnumerable())
+                .Concat(db.StoreMaterials
+                    .Select(m => m.PartNumber)
+                    .Distinct()
+                    .AsEnumerable()
+                    .Select(partNumber => new { PartNumber = partNumber, ItemType = "Material" }))
+                .Where(item => !string.IsNullOrWhiteSpace(item.PartNumber))
+                .ToList();
+
+            var duplicate = codes
+                .GroupBy(item => item.PartNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Select(item => item.ItemType).Distinct().Count() > 1);
+            if (duplicate != null)
+                throw new InvalidOperationException(
+                    $"Part Number '{duplicate.Key}' is assigned to more than one item type.");
+
+            foreach (var group in codes.GroupBy(item => item.PartNumber.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                var itemType = group.First().ItemType;
+                var registered = db.RegisteredPartNumbers
+                    .FirstOrDefault(item => item.PartNumber.ToLower() == group.Key.ToLower());
+                if (registered == null)
+                {
+                    db.RegisteredPartNumbers.Add(new RegisteredPartNumber
+                    {
+                        PartNumber = group.Key,
+                        ItemType = itemType
+                    });
+                }
+                else if (!string.Equals(registered.ItemType, itemType, StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        $"Part Number '{group.Key}' is registered as {registered.ItemType}, not {itemType}.");
+                }
+            }
+
+            db.SaveChanges();
+        }
+
+        private static void CreatePartNumberIndexes(NpmsDbContext db)
+        {
+            db.Database.ExecuteSqlRaw(@"
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Products_PartNumber_NOCASE
+                ON Products (PartNumber COLLATE NOCASE)");
+            db.Database.ExecuteSqlRaw(@"
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Toolings_ToolingCode_NOCASE
+                ON Toolings (ToolingCode COLLATE NOCASE)");
+        }
+
+        private static void EnsureDocumentProcessColumn(NpmsDbContext db)
+        {
+            var columns = db.Database
+                .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('Documents')")
+                .ToList();
+            if (!columns.Contains(nameof(DocumentMetadata.ProcessName), StringComparer.OrdinalIgnoreCase))
+                db.Database.ExecuteSqlRaw("ALTER TABLE Documents ADD COLUMN ProcessName TEXT NULL");
+        }
+
+        private static void EnsureToolingInventoryColumns(NpmsDbContext db)
+        {
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'UoM'",
+                "ALTER TABLE Toolings ADD COLUMN UoM TEXT NOT NULL DEFAULT 'PCS'");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'Location'",
+                "ALTER TABLE Toolings ADD COLUMN Location TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'Qty'",
+                "ALTER TABLE Toolings ADD COLUMN Qty REAL NOT NULL DEFAULT 0");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'ProductPartNumber'",
+                "ALTER TABLE Toolings ADD COLUMN ProductPartNumber TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'ProductFamily'",
+                "ALTER TABLE Toolings ADD COLUMN ProductFamily TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'EntryDate'",
+                "ALTER TABLE Toolings ADD COLUMN EntryDate TEXT NOT NULL DEFAULT '2026-01-01'");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'ItemCode'",
+                "ALTER TABLE Toolings ADD COLUMN ItemCode TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'Lot'",
+                "ALTER TABLE Toolings ADD COLUMN Lot TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'Package'",
+                "ALTER TABLE Toolings ADD COLUMN Package TEXT NOT NULL DEFAULT ''");
+            EnsureColumn(db,
+                "SELECT COUNT(*) AS Value FROM pragma_table_info('Toolings') WHERE name = 'Remarks'",
+                "ALTER TABLE Toolings ADD COLUMN Remarks TEXT NOT NULL DEFAULT ''");
+        }
+
+        private static void EnsureColumn(NpmsDbContext db, string columnExistsQuery, string alterQuery)
+        {
+            var exists = db.Database.SqlQueryRaw<int>(columnExistsQuery).AsEnumerable().First() > 0;
+            if (!exists)
+                db.Database.ExecuteSqlRaw(alterQuery);
         }
     }
 }

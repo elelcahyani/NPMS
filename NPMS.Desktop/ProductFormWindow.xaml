@@ -346,10 +346,10 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Section 4: Product Specification & Materials -->
+                            <!-- Section 4: Product Specification -->
                             <Border Style="{StaticResource SectionCard}">
                                 <StackPanel>
-                                    <TextBlock Text="Product Specification &amp; Materials" Style="{StaticResource SectionTitle}"/>
+                                    <TextBlock Text="Product Specification" Style="{StaticResource SectionTitle}"/>
                                     
                                     <!-- DIMENSIONS -->
                                     <TextBlock Text="DIMENSIONS" FontSize="10" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,6"/>
@@ -533,54 +533,6 @@
                                         </Grid>
                                     </Grid>
 
-                                    <!-- Materials -->
-                                    <Border BorderBrush="#E5E7EB" BorderThickness="0,1,0,0" Margin="0,8,0,8" Padding="0,10,0,0">
-                                        <StackPanel>
-                                            <Grid Margin="0,0,0,8">
-                                                <TextBlock Text="MATERIALS" FontSize="10" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center"/>
-                                                <Border HorizontalAlignment="Right" Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4">
-                                                    <Button Content="+ Add" Click="BtnAddMaterial_Click"
-                                                            Height="24" Padding="8,0" Background="Transparent"
-                                                            Foreground="#374151" FontSize="11"
-                                                            BorderThickness="0" Cursor="Hand"/>
-                                                </Border>
-                                            </Grid>
-                                            <Grid Background="#F9FAFB" Height="26">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="28"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Part Number" FontSize="10" FontWeight="SemiBold" Foreground="#6B7280" Margin="6,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="Part Name" FontSize="10" FontWeight="SemiBold" Foreground="#6B7280" VerticalAlignment="Center"/>
-                                            </Grid>
-                                            <ItemsControl x:Name="MaterialList">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
-                                                            <Grid Height="30">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="28"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBox Grid.Column="0" Text="{Binding PartNumber, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Margin="2" Padding="4,0" VerticalContentAlignment="Center"
-                                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="11"/>
-                                                                <TextBox Grid.Column="1" Text="{Binding PartName, UpdateSourceTrigger=PropertyChanged}"
-                                                                         Margin="2" Padding="4,0" VerticalContentAlignment="Center"
-                                                                         BorderBrush="#E5E7EB" BorderThickness="1" FontSize="11"/>
-                                                                <Button Grid.Column="2" Content="✖" Click="BtnRemoveMaterial_Click"
-                                                                        Background="Transparent" Foreground="#9CA3AF"
-                                                                        BorderThickness="0" FontSize="11" Cursor="Hand"
-                                                                        DataContext="{Binding}"/>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -801,6 +753,8 @@
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,4">
                                                                 <TextBlock Text="{Binding DocumentType}" FontSize="11" Foreground="#374151"/>
                                                                 <TextBlock Text="{Binding FileName}" FontSize="10" Foreground="#9CA3AF" TextWrapping="Wrap"/>
+                                                                <TextBlock Text="{Binding ProcessScope, StringFormat='Applies to: {0}'}"
+                                                                           FontSize="10" Foreground="#7C3AED" TextWrapping="Wrap"/>
                                                             </StackPanel>
                                                             <TextBlock Grid.Column="2" Text="{Binding Revision}"
                                                                        FontSize="11" VerticalAlignment="Center"/>

@@ -81,7 +81,8 @@ namespace NPMS.WebAPI.Controllers
         }
 
         [HttpPost("{id:int}/documents")]
-        public IActionResult UploadDocument(int id, [FromForm] string documentName, [FromForm] string documentType, [FromForm] string revision, [FromForm] IFormFile file)
+        public IActionResult UploadDocument(int id, [FromForm] string documentName, [FromForm] string documentType,
+            [FromForm] string revision, [FromForm] IFormFile file, [FromForm] string? processName = null)
         {
             if (file == null || file.Length == 0) return BadRequest(new { message = "File is required." });
 
@@ -91,7 +92,7 @@ namespace NPMS.WebAPI.Controllers
             file.CopyTo(ms);
             var bytes = ms.ToArray();
 
-            var doc = _service.AddDocument(id, documentName, documentType, revision, file.FileName, bytes, user);
+            var doc = _service.AddDocument(id, documentName, documentType, revision, file.FileName, bytes, user, processName);
             return Ok(doc);
         }
     }

@@ -44,6 +44,8 @@ namespace NPMS.Desktop
             // Validation: password
             if (password.Length < 8)
             { ShowError("Password minimal 8 karakter."); return; }
+            if (string.Equals(username, password, System.StringComparison.Ordinal))
+            { ShowError("Username dan password tidak boleh sama."); return; }
 
             if (CmbRole.SelectedItem is not ComboBoxItem selected)
             { ShowError("Pilih role terlebih dahulu."); return; }
